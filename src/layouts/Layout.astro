@@ -1,23 +1,37 @@
+---
+import "../styles/global.css";
+---
+
 <!doctype html>
 <html lang="en">
-	<head>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro Basics</title>
-	</head>
-	<body>
-		<slot />
-	</body>
-</html>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <link rel="icon" href="/favicon.ico" />
+        <title>Astro Basics</title>
+    </head>
+    <body class="flex flex-col min-h-screen">
+        <nav class="p-10 max-w-5xl mx-auto space-x-6 text-center">
+            <a href="/">Home</a>
+            <span>&bull;</span>
+            <a href="/about">About</a>
+            <span>&bull;</span>
+            <a href="/blog">Blog</a>
+            <span>&bull;</span>
+            <a
+                target="_blank"
+                href="https://wa.me/+55981743864?text=Oi estava no site e gostaria de falar com você"
+                >Contato</a
+            >
+        </nav>
 
-<style>
-	html,
-	body {
-		margin: 0;
-		width: 100%;
-		height: 100%;
-	}
-</style>
+        <main class="max-w-5xl mx-auto p-10 prose w-full">
+            <slot />
+        </main>
+
+        <footer class="mt-auto pb-10 mx-auto max-w-5xl text-center">
+            Todos os direitos reservados &copy; {new Date().getFullYear()}
+        </footer>
+    </body>
+</html>

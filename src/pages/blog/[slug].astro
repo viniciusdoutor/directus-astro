@@ -1,0 +1,25 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import directus from "../../lib/directus";
+import { readItems } from "@directus/sdk";
+
+export async function getStaticPaths() {
+    const posts = await directus.request(
+        readItems("posts", {
+            fields: ["*", { relation: ["*"] }],
+        }),
+    );
+    return posts.map((post) => ({ params: { slug: post.slug }, props: post }));
+}
+const post = Astro.props;
+---
+
+<Layout title={post.title}>
+    <main>
+        <img
+            src={`https://directus.brito.cloud/assets/${post.image}?width=800&height=300`}
+        />
+        <h1>{post.title}</h1>
+        <div set:html={post.content} />
+    </main>
+</Layout>
