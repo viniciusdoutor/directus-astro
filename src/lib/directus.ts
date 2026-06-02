@@ -6,7 +6,8 @@ type Global = {
 };
 
 type Author = {
-  name: string;
+  first_name: string;
+  last_name: string | null;
 };
 
 type Page = {
@@ -16,9 +17,9 @@ type Page = {
 };
 
 type Post = {
-  image: string;
+  image: string | null;
   title: string;
-  author: Author;
+  author: Author | null;
   content: string;
   published_date: string;
   slug: string;
@@ -30,7 +31,7 @@ type Schema = {
   pages: Page[];
 };
 
-const directus = createDirectus<Schema>("https://directus.brito.cloud").with(
+const directus = createDirectus<Schema>(import.meta.env.PUBLIC_DIRECTUS_URL).with(
   rest(),
 );
 

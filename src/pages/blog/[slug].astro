@@ -6,20 +6,31 @@ import { readItems } from "@directus/sdk";
 export async function getStaticPaths() {
     const posts = await directus.request(
         readItems("posts", {
-            fields: ["*", { relation: ["*"] }],
+            fields: ["slug", "title", "content", "image", "published_date", { author: ["first_name", "last_name"] }],
         }),
     );
     return posts.map((post) => ({ params: { slug: post.slug }, props: post }));
 }
+
 const post = Astro.props;
+const directusUrl = import.meta.env.PUBLIC_DIRECTUS_URL;
 ---
 
 <Layout title={post.title}>
     <main>
-        <img
-            src={`https://directus.brito.cloud/assets/${post.image}?width=800&height=300`}
-        />
+        {post.image && (
+            <img
+                src={`${directusUrl}/assets/${post.image}?width=800&height=300`}
+                alt={post.title}
+            />
+        )}
         <h1>{post.title}</h1>
+        {post.author && (
+            <p>
+                {post.published_date} &bull;{" "}
+                {[post.author.first_name, post.author.last_name].filter(Boolean).join(" ")}
+            </p>
+        )}
         <div set:html={post.content} />
     </main>
 </Layout>

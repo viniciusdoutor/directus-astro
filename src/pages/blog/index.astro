@@ -5,7 +5,7 @@ import { readItems } from "@directus/sdk";
 
 const posts = await directus.request(
     readItems("posts", {
-        fields: ["slug", "title", "published_date", { author: ["name"] }],
+        fields: ["slug", "title", "published_date", { author: ["first_name", "last_name"] }],
         sort: ["-published_date"],
     }),
 );
@@ -21,7 +21,10 @@ const posts = await directus.request(
                         <h2>{post.title}</h2>
                     </a>
                     <span>
-                        {post.published_date} &bull; {post.author.name}
+                        {post.published_date} &bull;{" "}
+                        {post.author
+                            ? [post.author.first_name, post.author.last_name].filter(Boolean).join(" ")
+                            : "Sem autor"}
                     </span>
                 </li>
             ))
