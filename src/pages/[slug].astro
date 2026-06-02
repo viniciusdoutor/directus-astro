@@ -4,16 +4,21 @@ import directus from "../lib/directus";
 import { readItems } from "@directus/sdk";
 
 export async function getStaticPaths() {
-    const pages = await directus.request(readItems("pages"));
-    return pages.map((page) => ({
-        params: { slug: page.slug },
-        props: page,
-    }));
+  const pages = await directus.request(readItems("pages", { fields: ["id", "title", "slug", "content"] }));
+  return pages.map(page => ({ params: { slug: page.slug }, props: { page } }));
 }
-const page = Astro.props;
+
+const { page } = Astro.props;
 ---
 
 <Layout title={page.title}>
-    <h1>{page.title}</h1>
-    <div set:html={page.content} />
+  <div class="max-w-3xl mx-auto px-6 py-12">
+    <h1 class="font-display font-bold text-4xl text-ink mb-6">{page.title}</h1>
+    <div class="prose prose-lg max-w-none
+      prose-headings:font-display prose-headings:text-ink
+      prose-p:text-ink/90 prose-p:leading-relaxed
+      prose-a:text-gold">
+      <Fragment set:html={page.content} />
+    </div>
+  </div>
 </Layout>

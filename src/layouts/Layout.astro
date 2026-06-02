@@ -2,42 +2,106 @@
 import "../styles/global.css";
 
 interface Props {
-    title: string;
+  title: string;
+  description?: string;
 }
 
-const { title } = Astro.props;
+const { title, description = "O portal de referência em concursos de Direito no Brasil" } = Astro.props;
+const year = new Date().getFullYear();
+const today = new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long", year: "numeric" });
 ---
 
 <!doctype html>
-<html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width" />
-        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-        <link rel="icon" href="/favicon.ico" />
-        <title>{title}</title>
-    </head>
-    <body class="flex flex-col min-h-screen">
-        <nav class="p-10 max-w-5xl mx-auto space-x-6 text-center">
-            <a href="/">Home</a>
-            <span>&bull;</span>
-            <a href="/about">About</a>
-            <span>&bull;</span>
-            <a href="/blog">Blog</a>
-            <span>&bull;</span>
-            <a
-                target="_blank"
-                href="https://wa.me/+55981743864?text=Oi estava no site e gostaria de falar com você"
-                >Contato</a
-            >
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>{title} — JusNews</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=IBM+Plex+Sans:wght@400;500;600&family=Lora:wght@400;500&display=swap" rel="stylesheet" />
+  </head>
+
+  <body class="bg-paper text-ink font-sans antialiased flex flex-col min-h-screen">
+
+    <!-- Top bar -->
+    <div class="bg-navy/95 text-white/50 text-xs font-sans py-1.5 border-b border-white/5">
+      <div class="max-w-7xl mx-auto px-6 flex justify-between items-center">
+        <span class="capitalize">{today}</span>
+        <span class="hidden sm:block tracking-wide">Concursos Jurídicos do Brasil</span>
+      </div>
+    </div>
+
+    <!-- Header -->
+    <header class="sticky top-0 z-50 bg-navy shadow-xl">
+      <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+
+        <a href="/" class="flex flex-col leading-none group">
+          <span class="font-display text-2xl font-bold text-white tracking-tight group-hover:text-gold-light transition-colors duration-150">
+            JusNews
+          </span>
+          <span class="text-gold text-[10px] font-sans tracking-[0.2em] uppercase mt-0.5">
+            Concursos &amp; Direito
+          </span>
+        </a>
+
+        <nav class="hidden md:flex items-center gap-7">
+          <a href="/" class="text-white/75 hover:text-gold font-sans text-sm font-medium tracking-wide transition-colors duration-150">Início</a>
+          <a href="/blog" class="text-white/75 hover:text-gold font-sans text-sm font-medium tracking-wide transition-colors duration-150">Blog</a>
+          <a href="/categoria/concursos-abertos" class="text-white/75 hover:text-gold font-sans text-sm font-medium tracking-wide transition-colors duration-150">Concursos</a>
+          <a href="/categoria/dicas-estudo" class="text-white/75 hover:text-gold font-sans text-sm font-medium tracking-wide transition-colors duration-150">Estudos</a>
+          <a href="/categoria/jurisprudencia" class="text-white/75 hover:text-gold font-sans text-sm font-medium tracking-wide transition-colors duration-150">Jurisprudência</a>
         </nav>
 
-        <main class="max-w-5xl mx-auto p-10 prose w-full">
-            <slot />
-        </main>
+      </div>
+      <!-- Gold rule -->
+      <div class="h-px bg-gradient-to-r from-transparent via-gold/70 to-transparent"></div>
+    </header>
 
-        <footer class="mt-auto pb-10 mx-auto max-w-5xl text-center">
-            Todos os direitos reservados &copy; {new Date().getFullYear()}
-        </footer>
-    </body>
+    <main class="flex-1">
+      <slot />
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-navy text-white mt-20">
+      <div class="max-w-7xl mx-auto px-6 pt-12 pb-8">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-10 pb-10 border-b border-white/10">
+
+          <div>
+            <span class="font-display text-2xl font-bold block mb-3">JusNews</span>
+            <p class="text-white/50 text-sm leading-relaxed max-w-xs">
+              Portal de referência em notícias, editais e dicas de estudo para concurseiros do Direito.
+            </p>
+          </div>
+
+          <div>
+            <h3 class="font-sans font-semibold text-gold text-xs uppercase tracking-widest mb-4">Seções</h3>
+            <ul class="space-y-2 text-sm text-white/60">
+              <li><a href="/" class="hover:text-gold transition-colors">Início</a></li>
+              <li><a href="/blog" class="hover:text-gold transition-colors">Blog</a></li>
+              <li><a href="/categoria/concursos-abertos" class="hover:text-gold transition-colors">Concursos Abertos</a></li>
+              <li><a href="/categoria/dicas-estudo" class="hover:text-gold transition-colors">Dicas de Estudo</a></li>
+            </ul>
+          </div>
+
+          <div>
+            <h3 class="font-sans font-semibold text-gold text-xs uppercase tracking-widest mb-4">Categorias</h3>
+            <ul class="space-y-2 text-sm text-white/60">
+              <li><a href="/categoria/stf-tribunais" class="hover:text-gold transition-colors">STF e Tribunais</a></li>
+              <li><a href="/categoria/jurisprudencia" class="hover:text-gold transition-colors">Jurisprudência</a></li>
+              <li><a href="/categoria/editais-resultados" class="hover:text-gold transition-colors">Editais e Resultados</a></li>
+              <li><a href="/categoria/concursos-estaduais" class="hover:text-gold transition-colors">Concursos Estaduais</a></li>
+            </ul>
+          </div>
+
+        </div>
+        <p class="text-white/25 text-xs text-center pt-6">
+          © {year} JusNews — Todos os direitos reservados
+        </p>
+      </div>
+    </footer>
+
+  </body>
 </html>

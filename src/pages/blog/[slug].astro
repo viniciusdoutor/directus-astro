@@ -2,35 +2,151 @@
 import Layout from "../../layouts/Layout.astro";
 import directus from "../../lib/directus";
 import { readItems } from "@directus/sdk";
+import PostCard from "../../components/PostCard.astro";
+import CategoryBadge from "../../components/CategoryBadge.astro";
+import TagPill from "../../components/TagPill.astro";
+import { formatDate, getCategory, getTags, assetUrl, authorName } from "../../lib/utils";
+
+const POST_FIELDS = [
+  "id", "title", "slug", "excerpt", "content", "published_date", "reading_time", "image", "featured",
+  { author: ["first_name", "last_name"] },
+  { category: ["id", "name", "slug", "color"] },
+  { tags: [{ tags_id: ["id", "name", "slug"] }] },
+] as const;
 
 export async function getStaticPaths() {
-    const posts = await directus.request(
-        readItems("posts", {
-            fields: ["slug", "title", "content", "image", "published_date", { author: ["first_name", "last_name"] }],
-        }),
-    );
-    return posts.map((post) => ({ params: { slug: post.slug }, props: post }));
+  const posts = await directus.request(
+    readItems("posts", {
+      filter: { status: { _eq: "published" } },
+      fields: [
+        "id", "title", "slug", "excerpt", "content", "published_date", "reading_time", "image", "featured",
+        { author: ["first_name", "last_name"] },
+        { category: ["id", "name", "slug", "color"] },
+        { tags: [{ tags_id: ["id", "name", "slug"] }] },
+      ] as any,
+    })
+  );
+  return posts.map(post => ({ params: { slug: post.slug }, props: { post } }));
 }
 
-const post = Astro.props;
+const { post } = Astro.props;
 const directusUrl = import.meta.env.PUBLIC_DIRECTUS_URL;
+const category = getCategory(post.category);
+const tags = getTags(post.tags as any);
+const author = authorName(post.author);
+const heroImg = assetUrl(post.image, directusUrl, "width=1200&height=520&fit=cover&quality=85");
+
+const related = await directus.request(
+  readItems("posts", {
+    filter: {
+      status: { _eq: "published" },
+      slug: { _neq: post.slug },
+      ...(category ? { category: { slug: { _eq: category.slug } } } : {}),
+    },
+    fields: [
+      "id", "title", "slug", "excerpt", "published_date", "reading_time", "image",
+      { category: ["id", "name", "slug", "color"] },
+      { tags: [{ tags_id: ["id", "name", "slug"] }] },
+    ] as any,
+    limit: 3,
+    sort: ["-published_date"],
+  })
+);
 ---
 
-<Layout title={post.title}>
-    <main>
-        {post.image && (
-            <img
-                src={`${directusUrl}/assets/${post.image}?width=800&height=300`}
-                alt={post.title}
-            />
-        )}
-        <h1>{post.title}</h1>
-        {post.author && (
-            <p>
-                {post.published_date} &bull;{" "}
-                {[post.author.first_name, post.author.last_name].filter(Boolean).join(" ")}
-            </p>
-        )}
-        <div set:html={post.content} />
-    </main>
+<Layout title={post.title} description={post.excerpt ?? undefined}>
+
+  <!-- Article header -->
+  <div class="max-w-3xl mx-auto px-6 pt-10 pb-6">
+    <p class="text-xs font-sans text-muted mb-4">
+      <a href="/" class="hover:text-gold transition-colors no-underline">Início</a>
+      <span class="mx-1.5">›</span>
+      <a href="/blog" class="hover:text-gold transition-colors no-underline">Blog</a>
+      {category && (
+        <>
+          <span class="mx-1.5">›</span>
+          <a href={`/categoria/${category.slug}`} class="hover:text-gold transition-colors no-underline">
+            {category.name}
+          </a>
+        </>
+      )}
+    </p>
+
+    {category && (
+      <div class="mb-4">
+        <CategoryBadge name={category.name} slug={category.slug} color={category.color} />
+      </div>
+    )}
+
+    <h1 class="font-display font-bold text-4xl md:text-5xl text-ink leading-tight mb-4">
+      {post.title}
+    </h1>
+
+    {post.excerpt && (
+      <p class="text-xl text-muted font-serif leading-relaxed mb-5">{post.excerpt}</p>
+    )}
+
+    <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm font-sans text-muted pb-6 border-b border-border">
+      {author && <span class="font-medium text-ink">{author}</span>}
+      <span>{formatDate(post.published_date)}</span>
+      {post.reading_time && <span>{post.reading_time} min de leitura</span>}
+    </div>
+  </div>
+
+  <!-- Hero image -->
+  {heroImg && (
+    <div class="max-w-5xl mx-auto px-6 mb-10">
+      <img src={heroImg} alt={post.title} class="w-full rounded-xl shadow-md object-cover max-h-[480px]" />
+    </div>
+  )}
+
+  <!-- Article body -->
+  <article class="max-w-3xl mx-auto px-6 pb-12">
+    <div class="prose prose-lg max-w-none
+      prose-headings:font-display prose-headings:text-ink prose-headings:font-bold
+      prose-h2:text-2xl prose-h2:mt-8 prose-h2:mb-3
+      prose-h3:text-xl prose-h3:mt-6 prose-h3:mb-2
+      prose-p:text-ink/90 prose-p:leading-relaxed
+      prose-a:text-gold prose-a:no-underline hover:prose-a:underline
+      prose-strong:text-ink prose-strong:font-semibold
+      prose-ul:text-ink/90 prose-ol:text-ink/90
+      prose-li:leading-relaxed
+      prose-table:text-sm
+      prose-thead:bg-paper prose-th:font-sans prose-th:font-semibold prose-th:text-ink prose-th:py-2
+      prose-td:border-border prose-td:py-2
+      prose-blockquote:border-gold prose-blockquote:text-muted">
+      <Fragment set:html={post.content} />
+    </div>
+
+    <!-- Tags -->
+    {tags.length > 0 && (
+      <div class="mt-8 pt-6 border-t border-border flex flex-wrap items-center gap-2">
+        <span class="text-xs font-sans font-semibold text-muted uppercase tracking-widest">Tags:</span>
+        {tags.map(tag => <TagPill name={tag.name} slug={tag.slug} />)}
+      </div>
+    )}
+  </article>
+
+  <!-- Related posts -->
+  {related.length > 0 && (
+    <section class="bg-paper border-t border-border py-12">
+      <div class="max-w-7xl mx-auto px-6">
+        <div class="flex items-end justify-between mb-7">
+          <div>
+            <h2 class="font-display font-bold text-2xl text-ink">
+              {category ? `Mais em ${category.name}` : "Posts Relacionados"}
+            </h2>
+            <div class="h-0.5 w-10 bg-gold mt-2"></div>
+          </div>
+          <a href="/blog" class="text-sm font-sans font-medium text-gold hover:text-navy transition-colors">
+            Ver todos →
+          </a>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {related.map(p => <PostCard post={p as any} directusUrl={directusUrl} />)}
+        </div>
+      </div>
+    </section>
+  )}
+
 </Layout>

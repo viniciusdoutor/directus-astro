@@ -1,0 +1,19 @@
+---
+interface Props {
+  name: string;
+  slug: string;
+  color?: string | null;
+  size?: "sm" | "md";
+}
+const { name, slug, color = "#0f2340", size = "md" } = Astro.props;
+const c = color ?? "#0f2340";
+const px = size === "sm" ? "px-2.5 py-0.5 text-[10px]" : "px-3 py-1 text-xs";
+---
+
+<a
+  href={`/categoria/${slug}`}
+  class={`inline-block font-sans font-semibold uppercase tracking-wider rounded-sm no-underline transition-opacity hover:opacity-80 ${px}`}
+  style={`background: ${c}18; color: ${c}; border: 1px solid ${c}35;`}
+>
+  {name}
+</a>

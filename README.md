@@ -1,24 +1,17 @@
-# directus-astro
+# JusNews — Blog de Concursos Jurídicos
 
-Site estático com **Astro 5** consumindo o CMS **Directus** via SDK REST.
+Portal editorial de notícias, editais e dicas de estudo para concurseiros do Direito.
+Construído com **Astro 5** + **Directus 11** + **Tailwind CSS v4**.
 
 ## Stack
 
-| Camada   | Tecnologia                    |
-|----------|-------------------------------|
-| Frontend | Astro 5 + Tailwind CSS v4     |
-| CMS      | Directus 11 (Docker)          |
-| Banco    | PostgreSQL 16 (Docker)        |
-| SDK      | `@directus/sdk` v21           |
-
-## Estrutura de páginas
-
-| Rota             | Fonte de dados       |
-|------------------|----------------------|
-| `/`              | Singleton `global`   |
-| `/blog`          | Coleção `posts`      |
-| `/blog/[slug]`   | Coleção `posts`      |
-| `/[slug]`        | Coleção `pages`      |
+| Camada    | Tecnologia                         |
+|-----------|------------------------------------|
+| Frontend  | Astro 5 · Tailwind CSS v4          |
+| CMS       | Directus 11 (Docker)               |
+| Banco     | PostgreSQL 16 (Docker)             |
+| SDK       | `@directus/sdk` v21                |
+| Fontes    | Playfair Display · IBM Plex Sans · Lora |
 
 ---
 
@@ -35,21 +28,20 @@ Site estático com **Astro 5** consumindo o CMS **Directus** via SDK REST.
 docker compose up -d
 ```
 
-Aguarde o Directus inicializar (~20 s). Verifique com:
+Aguarda ~20 s. Confirme com:
 
 ```bash
 curl http://localhost:8055/server/health
-# esperado: {"status":"ok"}
+# {"status":"ok"}
 ```
 
-**Painel admin:** `http://localhost:8055`  
-**Credenciais:** `admin@admin.com` / `admin123`
+**Admin:** `http://localhost:8055` · login: `admin@admin.com` / `admin123`
 
-### 2. Configurar variáveis de ambiente
+### 2. Variáveis de ambiente
 
 ```bash
 cp .env.example .env
-# edite .env se necessário (padrão já aponta para localhost:8055)
+# Padrão já aponta para localhost:8055
 ```
 
 ### 3. Instalar dependências e iniciar o dev server
@@ -63,51 +55,94 @@ npm run dev
 
 ---
 
-## Estrutura de coleções no Directus
+## Schema do Directus
 
 ### `global` (singleton)
-| Campo         | Tipo   |
-|---------------|--------|
-| `title`       | string |
-| `description` | text   |
+| Campo         | Tipo   | Descrição                    |
+|---------------|--------|------------------------------|
+| `title`       | string | Título do site               |
+| `description` | text   | Descrição meta               |
+| `tagline`     | string | Slogan do portal             |
+
+### `categories`
+| Campo         | Tipo   | Descrição                    |
+|---------------|--------|------------------------------|
+| `name`        | string | Nome da categoria            |
+| `slug`        | string | URL slug único               |
+| `color`       | string | Cor hex do badge (ex: `#2563eb`) |
+| `description` | text   | Descrição curta              |
+
+### `tags`
+| Campo  | Tipo   | Descrição     |
+|--------|--------|---------------|
+| `name` | string | Nome da tag   |
+| `slug` | string | URL slug único|
 
 ### `posts`
-| Campo            | Tipo                        |
-|------------------|-----------------------------|
-| `title`          | string                      |
-| `slug`           | string                      |
-| `content`        | text                        |
-| `published_date` | date                        |
-| `image`          | string                      |
-| `author`         | M2O → `directus_users`      |
+| Campo            | Tipo                         | Descrição                     |
+|------------------|------------------------------|-------------------------------|
+| `title`          | string                       | Título do post                |
+| `slug`           | string                       | URL slug único                |
+| `excerpt`        | text                         | Resumo (aparece nos cards)    |
+| `content`        | text (HTML)                  | Corpo completo do post        |
+| `published_date` | date                         | Data de publicação            |
+| `status`         | string (`published`/`draft`) | Visibilidade pública          |
+| `featured`       | boolean                      | Exibir no hero da home        |
+| `reading_time`   | integer                      | Minutos estimados de leitura  |
+| `image`          | string (UUID)                | Imagem via Directus Files     |
+| `author`         | M2O → `directus_users`       | Autor do post                 |
+| `category`       | M2O → `categories`           | Categoria principal           |
+| `tags`           | M2M → `tags` (via `posts_tags`) | Tags do post              |
 
 ### `pages`
-| Campo     | Tipo   |
-|-----------|--------|
-| `title`   | string |
-| `slug`    | string |
-| `content` | text   |
-
-> Permissões públicas de leitura estão configuradas nas três coleções e em `directus_users` (campos `first_name`, `last_name`).
+| Campo     | Tipo        | Descrição       |
+|-----------|-------------|-----------------|
+| `title`   | string      | Título da página|
+| `slug`    | string      | URL slug        |
+| `content` | text (HTML) | Corpo HTML      |
 
 ---
 
-## Comandos úteis
+## Rotas geradas
+
+| Rota                      | Arquivo                         | Descrição                  |
+|---------------------------|---------------------------------|----------------------------|
+| `/`                       | `pages/index.astro`             | Homepage com hero e grid   |
+| `/blog`                   | `pages/blog/index.astro`        | Listagem com sidebar       |
+| `/blog/[slug]`            | `pages/blog/[slug].astro`       | Detalhe do post            |
+| `/categoria/[slug]`       | `pages/categoria/[slug].astro`  | Posts por categoria        |
+| `/tag/[slug]`             | `pages/tag/[slug].astro`        | Posts por tag              |
+| `/[slug]`                 | `pages/[slug].astro`            | Páginas estáticas          |
+
+---
+
+## Componentes
+
+| Componente           | Localização                             | Uso                                |
+|----------------------|-----------------------------------------|------------------------------------|
+| `CategoryBadge`      | `components/CategoryBadge.astro`        | Badge colorido de categoria        |
+| `TagPill`            | `components/TagPill.astro`              | Pílula de tag                      |
+| `PostCard`           | `components/PostCard.astro`             | Card de post (grid/listing)        |
+| `Sidebar`            | `components/Sidebar.astro`              | Sidebar com categorias e tags      |
+
+---
+
+## Comandos
 
 ```bash
-# Iniciar apenas os containers do Directus
+# Iniciar containers Directus + PostgreSQL
 docker compose up -d
 
-# Parar os containers (dados preservados)
+# Parar (dados preservados)
 docker compose down
 
-# Destruir tudo incluindo dados do banco
+# Destruir incluindo volumes (apaga banco)
 docker compose down -v
 
-# Dev server do frontend
+# Dev server
 npm run dev
 
-# Build estático
+# Build estático → dist/
 npm run build
 
 # Preview do build

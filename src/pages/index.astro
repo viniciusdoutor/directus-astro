@@ -1,16 +1,154 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import directus from "../lib/directus";
-import { readSingleton } from "@directus/sdk";
+import { readItems, readSingleton } from "@directus/sdk";
+import PostCard from "../components/PostCard.astro";
+import CategoryBadge from "../components/CategoryBadge.astro";
+import { formatDate, getCategory, getTags, assetUrl } from "../lib/utils";
 
-const global = await directus.request(readSingleton("global"));
+const directusUrl = import.meta.env.PUBLIC_DIRECTUS_URL;
+
+const POST_FIELDS = [
+  "id", "title", "slug", "excerpt", "published_date", "reading_time", "image", "featured",
+  { category: ["id", "name", "slug", "color"] },
+  { tags: [{ tags_id: ["id", "name", "slug"] }] },
+] as const;
+
+const [global, featured, recent, categories] = await Promise.all([
+  directus.request(readSingleton("global")),
+  directus.request(readItems("posts", {
+    filter: { status: { _eq: "published" }, featured: { _eq: true } },
+    fields: POST_FIELDS as any,
+    sort: ["-published_date"],
+    limit: 1,
+  })),
+  directus.request(readItems("posts", {
+    filter: { status: { _eq: "published" } },
+    fields: POST_FIELDS as any,
+    sort: ["-published_date"],
+    limit: 7,
+  })),
+  directus.request(readItems("categories", {
+    fields: ["id", "name", "slug", "color", "description"],
+    sort: ["name"],
+  })),
+]);
+
+const hero = featured[0] ?? recent[0];
+const heroCategory = getCategory(hero?.category);
+const heroImgSrc = assetUrl(hero?.image, directusUrl, "width=1400&height=600&fit=cover&quality=85");
+const gridPosts = recent.filter(p => p.id !== hero?.id).slice(0, 6);
 ---
 
-<Layout title={global.title}>
-    <main>
-        <div>
-            <h1>{global.title}</h1>
-            <p>{global.description}</p>
+<Layout title={global.title} description={global.description ?? undefined}>
+
+  <!-- Faixa de destaque -->
+  <div class="bg-gold/10 border-b border-gold/25 py-2">
+    <div class="max-w-7xl mx-auto px-6 flex items-center gap-3">
+      <span class="bg-gold text-white text-[10px] font-sans font-bold uppercase tracking-widest px-2.5 py-1 rounded-sm flex-shrink-0">
+        Em Alta
+      </span>
+      <p class="text-ink/70 text-sm font-sans truncate">{hero?.title}</p>
+    </div>
+  </div>
+
+  <!-- Hero -->
+  {hero && (
+    <section class="max-w-7xl mx-auto px-6 pt-8">
+      <a href={`/blog/${hero.slug}`} class="group block relative rounded-xl overflow-hidden no-underline shadow-lg">
+
+        <div class="relative h-[400px] md:h-[500px]">
+          {heroImgSrc ? (
+            <img
+              src={heroImgSrc}
+              alt={hero.title}
+              class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            />
+          ) : (
+            <div
+              class="w-full h-full"
+              style={`background: linear-gradient(135deg, ${heroCategory?.color ?? "#0f2340"} 0%, #0f2340 60%, #1a3560 100%)`}
+            ></div>
+          )}
+          <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent"></div>
         </div>
-    </main>
+
+        <div class="absolute bottom-0 left-0 right-0 p-8 md:p-12">
+          <div class="flex items-center gap-3 mb-3">
+            <span class="bg-gold text-white text-[10px] font-sans font-bold uppercase tracking-widest px-2.5 py-1.5 rounded-sm">
+              Destaque
+            </span>
+            {heroCategory && (
+              <span class="text-white/70 text-xs font-sans uppercase tracking-wider">{heroCategory.name}</span>
+            )}
+          </div>
+          <h1 class="font-display font-bold text-white text-3xl md:text-4xl lg:text-[2.75rem] leading-tight max-w-3xl mb-3 group-hover:text-gold-light transition-colors duration-200">
+            {hero.title}
+          </h1>
+          {hero.excerpt && (
+            <p class="text-white/65 text-base md:text-lg max-w-2xl line-clamp-2 mb-4 font-serif">
+              {hero.excerpt}
+            </p>
+          )}
+          <div class="flex items-center gap-3 text-white/50 text-sm font-sans">
+            <span>{formatDate(hero.published_date)}</span>
+            {hero.reading_time && (
+              <>
+                <span>·</span>
+                <span>{hero.reading_time} min de leitura</span>
+              </>
+            )}
+          </div>
+        </div>
+      </a>
+    </section>
+  )}
+
+  <!-- Últimas notícias -->
+  <section class="max-w-7xl mx-auto px-6 py-12">
+    <div class="flex items-end justify-between mb-7">
+      <div>
+        <h2 class="font-display font-bold text-2xl text-ink">Últimas Notícias</h2>
+        <div class="h-0.5 w-12 bg-gold mt-2"></div>
+      </div>
+      <a href="/blog" class="text-sm font-sans font-medium text-gold hover:text-navy transition-colors">
+        Ver todas →
+      </a>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {gridPosts.map(post => (
+        <PostCard post={post as any} directusUrl={directusUrl} />
+      ))}
+    </div>
+  </section>
+
+  <!-- Categorias -->
+  <section class="bg-white border-y border-border py-12">
+    <div class="max-w-7xl mx-auto px-6">
+      <div class="text-center mb-8">
+        <h2 class="font-display font-bold text-2xl text-ink">Explore por Área</h2>
+        <p class="text-muted font-sans text-sm mt-1">Navegue pelas categorias do portal</p>
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+        {categories.map(cat => (
+          <a
+            href={`/categoria/${cat.slug}`}
+            class="flex flex-col items-center gap-2.5 p-4 rounded-lg border border-border bg-paper hover:bg-white hover:border-current hover:shadow-sm transition-all no-underline text-center group"
+            style={`--c: ${cat.color ?? "#0f2340"}`}
+          >
+            <span
+              class="w-9 h-9 rounded-full flex items-center justify-center text-white flex-shrink-0"
+              style={`background: ${cat.color ?? "#0f2340"}`}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z" />
+              </svg>
+            </span>
+            <span class="text-xs font-sans font-semibold text-ink leading-snug">{cat.name}</span>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
 </Layout>

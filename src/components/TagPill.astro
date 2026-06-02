@@ -1,0 +1,18 @@
+---
+interface Props {
+  name: string;
+  slug: string;
+  active?: boolean;
+}
+const { name, slug, active = false } = Astro.props;
+---
+
+<a
+  href={`/tag/${slug}`}
+  class={`inline-block text-xs font-sans font-medium px-2.5 py-1 rounded border no-underline transition-colors duration-150
+    ${active
+      ? "bg-navy text-white border-navy"
+      : "text-muted bg-white border-border hover:border-gold hover:text-gold"}`}
+>
+  {name}
+</a>

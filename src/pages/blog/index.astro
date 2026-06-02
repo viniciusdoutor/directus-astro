@@ -2,32 +2,77 @@
 import Layout from "../../layouts/Layout.astro";
 import directus from "../../lib/directus";
 import { readItems } from "@directus/sdk";
+import PostCard from "../../components/PostCard.astro";
+import Sidebar from "../../components/Sidebar.astro";
 
-const posts = await directus.request(
-    readItems("posts", {
-        fields: ["slug", "title", "published_date", { author: ["first_name", "last_name"] }],
-        sort: ["-published_date"],
-    }),
-);
+const directusUrl = import.meta.env.PUBLIC_DIRECTUS_URL;
+
+const POST_FIELDS = [
+  "id", "title", "slug", "excerpt", "published_date", "reading_time", "image", "featured",
+  { category: ["id", "name", "slug", "color"] },
+  { tags: [{ tags_id: ["id", "name", "slug"] }] },
+] as const;
+
+const [posts, categories, tags] = await Promise.all([
+  directus.request(readItems("posts", {
+    filter: { status: { _eq: "published" } },
+    fields: POST_FIELDS as any,
+    sort: ["-published_date"],
+    limit: 24,
+  })),
+  directus.request(readItems("categories", { fields: ["id", "name", "slug", "color", "description"], sort: ["name"] })),
+  directus.request(readItems("tags", { fields: ["id", "name", "slug"], sort: ["name"] })),
+]);
 ---
 
-<Layout title="Blog">
-    <h1>Blog Posts</h1>
-    <ul>
-        {
-            posts.map((post) => (
-                <li>
-                    <a href={`/blog/${post.slug}`}>
-                        <h2>{post.title}</h2>
-                    </a>
-                    <span>
-                        {post.published_date} &bull;{" "}
-                        {post.author
-                            ? [post.author.first_name, post.author.last_name].filter(Boolean).join(" ")
-                            : "Sem autor"}
-                    </span>
-                </li>
-            ))
-        }
-    </ul>
+<Layout title="Blog" description="Notícias, editais e dicas para concurseiros do Direito">
+
+  <!-- Page header -->
+  <div class="bg-white border-b border-border">
+    <div class="max-w-7xl mx-auto px-6 py-8">
+      <p class="text-xs font-sans text-muted mb-1">
+        <a href="/" class="hover:text-gold transition-colors no-underline">Início</a>
+        <span class="mx-1.5 text-border">›</span>
+        Blog
+      </p>
+      <h1 class="font-display font-bold text-4xl text-ink mb-1">Blog</h1>
+      <p class="text-muted font-sans text-sm">
+        {posts.length} artigo{posts.length !== 1 ? "s" : ""} publicado{posts.length !== 1 ? "s" : ""}
+      </p>
+    </div>
+  </div>
+
+  <!-- Category filter strip -->
+  <div class="bg-paper border-b border-border overflow-x-auto">
+    <div class="max-w-7xl mx-auto px-6 py-3 flex items-center gap-2 min-w-max">
+      <a href="/blog" class="px-3 py-1.5 text-xs font-sans font-semibold rounded-full border border-navy bg-navy text-white no-underline">
+        Todos
+      </a>
+      {categories.map(cat => (
+        <a
+          href={`/categoria/${cat.slug}`}
+          class="px-3 py-1.5 text-xs font-sans font-medium rounded-full border border-border text-muted hover:border-current no-underline transition-colors whitespace-nowrap"
+          style={`--c: ${cat.color}`}
+        >
+          {cat.name}
+        </a>
+      ))}
+    </div>
+  </div>
+
+  <!-- Content + Sidebar -->
+  <div class="max-w-7xl mx-auto px-6 py-10">
+    <div class="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-10">
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 content-start">
+        {posts.map(post => (
+          <PostCard post={post as any} directusUrl={directusUrl} />
+        ))}
+      </div>
+
+      <Sidebar categories={categories} tags={tags} />
+
+    </div>
+  </div>
+
 </Layout>

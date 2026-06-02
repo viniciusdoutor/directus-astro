@@ -1,0 +1,87 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import directus from "../../lib/directus";
+import { readItems } from "@directus/sdk";
+import PostCard from "../../components/PostCard.astro";
+import Sidebar from "../../components/Sidebar.astro";
+import type { Category } from "../../lib/directus";
+
+export async function getStaticPaths() {
+  const categories = await directus.request(
+    readItems("categories", { fields: ["id", "name", "slug", "color", "description"] })
+  );
+  return categories.map(cat => ({ params: { slug: cat.slug }, props: { category: cat } }));
+}
+
+interface Props { category: Category; }
+const { category } = Astro.props;
+const directusUrl = import.meta.env.PUBLIC_DIRECTUS_URL;
+
+const [posts, categories, tags] = await Promise.all([
+  directus.request(readItems("posts", {
+    filter: { status: { _eq: "published" }, category: { slug: { _eq: category.slug } } },
+    fields: [
+      "id", "title", "slug", "excerpt", "published_date", "reading_time", "image", "featured",
+      { category: ["id", "name", "slug", "color"] },
+      { tags: [{ tags_id: ["id", "name", "slug"] }] },
+    ] as any,
+    sort: ["-published_date"],
+    limit: 24,
+  })),
+  directus.request(readItems("categories", { fields: ["id", "name", "slug", "color", "description"], sort: ["name"] })),
+  directus.request(readItems("tags", { fields: ["id", "name", "slug"], sort: ["name"] })),
+]);
+---
+
+<Layout title={`${category.name} — Blog`} description={category.description ?? undefined}>
+
+  <!-- Category header -->
+  <div class="bg-white border-b border-border" style={`border-top: 4px solid ${category.color ?? "#0f2340"}`}>
+    <div class="max-w-7xl mx-auto px-6 py-8">
+      <p class="text-xs font-sans text-muted mb-2">
+        <a href="/" class="hover:text-gold transition-colors no-underline">Início</a>
+        <span class="mx-1.5">›</span>
+        <a href="/blog" class="hover:text-gold transition-colors no-underline">Blog</a>
+        <span class="mx-1.5">›</span>
+        Categoria
+      </p>
+      <div class="flex items-center gap-3 mb-2">
+        <span
+          class="w-4 h-4 rounded-full flex-shrink-0"
+          style={`background: ${category.color ?? "#0f2340"}`}
+        ></span>
+        <h1 class="font-display font-bold text-4xl text-ink">{category.name}</h1>
+      </div>
+      {category.description && (
+        <p class="text-muted font-sans max-w-2xl">{category.description}</p>
+      )}
+      <p class="text-xs font-sans text-muted mt-2">
+        {posts.length} post{posts.length !== 1 ? "s" : ""}
+      </p>
+    </div>
+  </div>
+
+  <div class="max-w-7xl mx-auto px-6 py-10">
+    <div class="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-10">
+
+      <div>
+        {posts.length === 0 ? (
+          <div class="py-16 text-center">
+            <p class="text-muted font-sans">Nenhum post encontrado nesta categoria.</p>
+            <a href="/blog" class="mt-4 inline-block text-sm font-sans text-gold hover:underline">
+              Ver todos os posts
+            </a>
+          </div>
+        ) : (
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {posts.map(post => <PostCard post={post as any} directusUrl={directusUrl} />)}
+          </div>
+        )}
+      </div>
+
+      <Sidebar {categories} {tags} activeCategorySlug={category.slug} />
+
+    </div>
+  </div>
+
+</Layout>

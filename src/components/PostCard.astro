@@ -1,0 +1,78 @@
+---
+import CategoryBadge from "./CategoryBadge.astro";
+import TagPill from "./TagPill.astro";
+import { formatDate, getCategory, getTags, assetUrl } from "../lib/utils";
+import type { Post } from "../lib/directus";
+
+interface Props {
+  post: Post;
+  directusUrl: string;
+}
+
+const { post, directusUrl } = Astro.props;
+const category = getCategory(post.category);
+const tags = getTags(post.tags);
+const imgSrc = assetUrl(post.image, directusUrl, "width=600&height=340&fit=cover&quality=80");
+const catColor = category?.color ?? "#0f2340";
+---
+
+<article class="group bg-white rounded-lg overflow-hidden border border-border shadow-sm hover:shadow-md transition-all duration-200 flex flex-col h-full">
+
+  <!-- Image / fallback -->
+  <a href={`/blog/${post.slug}`} class="block overflow-hidden flex-shrink-0">
+    {imgSrc ? (
+      <img
+        src={imgSrc}
+        alt={post.title}
+        class="w-full h-44 object-cover group-hover:scale-105 transition-transform duration-300"
+        loading="lazy"
+      />
+    ) : (
+      <div
+        class="w-full h-44 flex items-center justify-center"
+        style={`background: linear-gradient(135deg, ${catColor}14 0%, ${catColor}30 100%); border-bottom: 2px solid ${catColor}40`}
+      >
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="opacity-25" style={`color: ${catColor}`}>
+          <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z" />
+        </svg>
+      </div>
+    )}
+  </a>
+
+  <div class="p-5 flex flex-col flex-1 gap-2.5">
+
+    {category && (
+      <div>
+        <CategoryBadge name={category.name} slug={category.slug} color={category.color} size="sm" />
+      </div>
+    )}
+
+    <a href={`/blog/${post.slug}`} class="block no-underline">
+      <h2 class="font-display font-bold text-lg text-ink leading-snug hover:text-navy-light transition-colors line-clamp-3">
+        {post.title}
+      </h2>
+    </a>
+
+    {post.excerpt && (
+      <p class="text-muted text-sm leading-relaxed line-clamp-2">{post.excerpt}</p>
+    )}
+
+    <div class="mt-auto pt-3 border-t border-border space-y-2">
+      <div class="flex items-center gap-2 text-xs text-muted font-sans">
+        <span>{formatDate(post.published_date)}</span>
+        {post.reading_time && (
+          <>
+            <span class="text-border">·</span>
+            <span>{post.reading_time} min</span>
+          </>
+        )}
+      </div>
+      {tags.length > 0 && (
+        <div class="flex flex-wrap gap-1.5">
+          {tags.slice(0, 3).map(tag => <TagPill name={tag.name} slug={tag.slug} />)}
+        </div>
+      )}
+    </div>
+
+  </div>
+</article>

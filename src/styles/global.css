@@ -1,2 +1,22 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
+
+@theme {
+  --color-navy:       #0f2340;
+  --color-navy-light: #1a3a6b;
+  --color-gold:       #c8960c;
+  --color-gold-light: #f5e6a8;
+  --color-paper:      #f8f7f4;
+  --color-ink:        #1c1c2e;
+  --color-muted:      #6b7280;
+  --color-border:     #e5e0d8;
+
+  --font-display: "Playfair Display", Georgia, "Times New Roman", serif;
+  --font-sans:    "IBM Plex Sans", "Helvetica Neue", system-ui, sans-serif;
+  --font-serif:   "Lora", Georgia, "Times New Roman", serif;
+}
+
+html { scroll-behavior: smooth; }
+
+.prose { font-family: var(--font-serif); }
+.prose h1, .prose h2, .prose h3, .prose h4 { font-family: var(--font-display); }
