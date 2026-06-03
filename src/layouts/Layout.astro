@@ -9,6 +9,7 @@ interface Props {
 const { title, description = "O portal de referência em concursos de Direito no Brasil" } = Astro.props;
 const year = new Date().getFullYear();
 const today = new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long", year: "numeric" });
+const todayLabel = today.charAt(0).toUpperCase() + today.slice(1);
 ---
 
 <!doctype html>
@@ -27,37 +28,58 @@ const today = new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "2-
   <body class="bg-paper text-ink font-sans antialiased flex flex-col min-h-screen">
 
     <!-- Top bar -->
-    <div class="bg-navy/95 text-white/50 text-xs font-sans py-1.5 border-b border-white/5">
-      <div class="max-w-7xl mx-auto px-6 flex justify-between items-center">
-        <span class="capitalize">{today}</span>
-        <span class="hidden sm:block tracking-wide">Concursos Jurídicos do Brasil</span>
+    <div class="bg-navy text-white text-xs font-sans py-1.5 border-b border-white/10">
+      <div class="max-w-7xl mx-auto px-6 flex justify-between items-center gap-4">
+        <span class="text-white/55 capitalize whitespace-nowrap hidden sm:block">{todayLabel}</span>
+        <div class="flex items-center gap-1.5 text-white/65">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="#c8960c">
+            <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
+          </svg>
+          <span>Informação confiável. Conteúdo que aprova.</span>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="text-white/35 text-[11px] hidden sm:block">Siga-nos</span>
+          <a href="#" class="text-white/50 hover:text-gold transition-colors" aria-label="Facebook">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/></svg>
+          </a>
+          <a href="#" class="text-white/50 hover:text-gold transition-colors" aria-label="Instagram">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+          </a>
+          <a href="#" class="text-white/50 hover:text-gold transition-colors" aria-label="LinkedIn">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-4 0v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z"/><circle cx="4" cy="4" r="2"/></svg>
+          </a>
+          <a href="#" class="text-white/50 hover:text-gold transition-colors" aria-label="YouTube">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M22.54 6.42a2.78 2.78 0 00-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46a2.78 2.78 0 00-1.95 1.96A29 29 0 001 12a29 29 0 00.46 5.58 2.78 2.78 0 001.95 1.96C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 001.95-1.96A29 29 0 0023 12a29 29 0 00-.46-5.58zM9.75 15.02V8.98L15.5 12l-5.75 3.02z"/></svg>
+          </a>
+        </div>
       </div>
     </div>
 
     <!-- Header -->
-    <header class="sticky top-0 z-50 bg-navy shadow-xl">
-      <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-
-        <a href="/" class="flex flex-col leading-none group">
-          <span class="font-display text-2xl font-bold text-white tracking-tight group-hover:text-gold-light transition-colors duration-150">
-            JusNews
-          </span>
-          <span class="text-gold text-[10px] font-sans tracking-[0.2em] uppercase mt-0.5">
-            Concursos &amp; Direito
-          </span>
+    <header class="sticky top-0 z-50 bg-white shadow-sm">
+      <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between gap-6">
+        <a href="/" class="flex flex-col leading-none group flex-shrink-0">
+          <span class="font-display text-2xl font-bold text-ink tracking-tight group-hover:text-navy transition-colors">JusNews</span>
+          <span class="text-gold text-[10px] font-sans tracking-[0.2em] uppercase mt-0.5">Concursos &amp; Direito</span>
         </a>
-
-        <nav class="hidden md:flex items-center gap-7">
-          <a href="/" class="text-white/75 hover:text-gold font-sans text-sm font-medium tracking-wide transition-colors duration-150">Início</a>
-          <a href="/blog" class="text-white/75 hover:text-gold font-sans text-sm font-medium tracking-wide transition-colors duration-150">Blog</a>
-          <a href="/categoria/concursos-abertos" class="text-white/75 hover:text-gold font-sans text-sm font-medium tracking-wide transition-colors duration-150">Concursos</a>
-          <a href="/categoria/dicas-estudo" class="text-white/75 hover:text-gold font-sans text-sm font-medium tracking-wide transition-colors duration-150">Estudos</a>
-          <a href="/categoria/jurisprudencia" class="text-white/75 hover:text-gold font-sans text-sm font-medium tracking-wide transition-colors duration-150">Jurisprudência</a>
+        <nav class="hidden md:flex items-center gap-6">
+          {[
+            ["Início", "/"],
+            ["Blog", "/blog"],
+            ["Concursos", "/categoria/concursos-abertos"],
+            ["Estudos", "/categoria/dicas-estudo"],
+            ["Jurisprudência", "/categoria/jurisprudencia"],
+            ["Editais", "/categoria/editais-resultados"],
+            ["Tribunais", "/categoria/stf-tribunais"],
+          ].map(([label, href]) => (
+            <a href={href} class="text-ink/65 hover:text-navy font-sans text-sm font-medium transition-colors">{label}</a>
+          ))}
         </nav>
-
+        <button class="w-9 h-9 rounded-full border border-border flex items-center justify-center text-muted hover:text-navy hover:border-navy transition-colors flex-shrink-0" aria-label="Buscar">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </button>
       </div>
-      <!-- Gold rule -->
-      <div class="h-px bg-gradient-to-r from-transparent via-gold/70 to-transparent"></div>
+      <div class="h-px bg-gradient-to-r from-transparent via-gold/50 to-transparent"></div>
     </header>
 
     <main class="flex-1">
@@ -65,41 +87,67 @@ const today = new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "2-
     </main>
 
     <!-- Footer -->
-    <footer class="bg-navy text-white mt-20">
-      <div class="max-w-7xl mx-auto px-6 pt-12 pb-8">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-10 pb-10 border-b border-white/10">
+    <footer class="bg-navy text-white mt-0">
+      <div class="max-w-7xl mx-auto px-6 pt-12 pb-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 pb-10 border-b border-white/10">
 
           <div>
-            <span class="font-display text-2xl font-bold block mb-3">JusNews</span>
-            <p class="text-white/50 text-sm leading-relaxed max-w-xs">
-              Portal de referência em notícias, editais e dicas de estudo para concurseiros do Direito.
+            <a href="/" class="flex flex-col leading-none mb-4">
+              <span class="font-display text-xl font-bold text-white">JusNews</span>
+              <span class="text-gold text-[10px] font-sans tracking-[0.2em] uppercase mt-0.5">Concursos &amp; Direito</span>
+            </a>
+            <p class="text-white/40 text-sm leading-relaxed mb-5 max-w-xs">
+              Referência em notícias, editais e conteúdo jurídico para concurseiros do Direito. Informação confiável. Conteúdo que aprova.
             </p>
+            <div class="flex items-center gap-2.5">
+              {[
+                ["Facebook", "M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"],
+                ["Instagram", null],
+                ["LinkedIn", null],
+                ["YouTube", null],
+              ].map(([label]) => (
+                <a href="#" class="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center hover:bg-gold transition-colors text-white/70" aria-label={label as string}>
+                  {label === "Facebook" && <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/></svg>}
+                  {label === "Instagram" && <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>}
+                  {label === "LinkedIn" && <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-4 0v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z"/><circle cx="4" cy="4" r="2"/></svg>}
+                  {label === "YouTube" && <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M22.54 6.42a2.78 2.78 0 00-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46a2.78 2.78 0 00-1.95 1.96A29 29 0 001 12a29 29 0 00.46 5.58 2.78 2.78 0 001.95 1.96C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 001.95-1.96A29 29 0 0023 12a29 29 0 00-.46-5.58zM9.75 15.02V8.98L15.5 12l-5.75 3.02z"/></svg>}
+                </a>
+              ))}
+            </div>
           </div>
 
           <div>
-            <h3 class="font-sans font-semibold text-gold text-xs uppercase tracking-widest mb-4">Seções</h3>
-            <ul class="space-y-2 text-sm text-white/60">
-              <li><a href="/" class="hover:text-gold transition-colors">Início</a></li>
-              <li><a href="/blog" class="hover:text-gold transition-colors">Blog</a></li>
-              <li><a href="/categoria/concursos-abertos" class="hover:text-gold transition-colors">Concursos Abertos</a></li>
-              <li><a href="/categoria/dicas-estudo" class="hover:text-gold transition-colors">Dicas de Estudo</a></li>
+            <h3 class="font-sans font-semibold text-gold text-[11px] uppercase tracking-widest mb-5">Seções</h3>
+            <ul class="space-y-2.5 text-sm text-white/50">
+              {[["Início","/"],["Blog","/blog"],["Concursos Abertos","/categoria/concursos-abertos"],["Dicas de Estudo","/categoria/dicas-estudo"],["Editais e Resultados","/categoria/editais-resultados"],["Jurisprudência","/categoria/jurisprudencia"]].map(([l,h])=>(
+                <li><a href={h} class="hover:text-gold transition-colors">{l}</a></li>
+              ))}
             </ul>
           </div>
 
           <div>
-            <h3 class="font-sans font-semibold text-gold text-xs uppercase tracking-widest mb-4">Categorias</h3>
-            <ul class="space-y-2 text-sm text-white/60">
-              <li><a href="/categoria/stf-tribunais" class="hover:text-gold transition-colors">STF e Tribunais</a></li>
-              <li><a href="/categoria/jurisprudencia" class="hover:text-gold transition-colors">Jurisprudência</a></li>
-              <li><a href="/categoria/editais-resultados" class="hover:text-gold transition-colors">Editais e Resultados</a></li>
-              <li><a href="/categoria/concursos-estaduais" class="hover:text-gold transition-colors">Concursos Estaduais</a></li>
+            <h3 class="font-sans font-semibold text-gold text-[11px] uppercase tracking-widest mb-5">Categorias</h3>
+            <ul class="space-y-2.5 text-sm text-white/50">
+              {[["STF e Tribunais","/categoria/stf-tribunais"],["Concursos Estaduais","/categoria/concursos-estaduais"],["Legislação","/categoria/legislacao"],["Editais e Resultados","/categoria/editais-resultados"],["Carreiras Jurídicas","/categoria/carreiras"]].map(([l,h])=>(
+                <li><a href={h} class="hover:text-gold transition-colors">{l}</a></li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <h3 class="font-sans font-semibold text-gold text-[11px] uppercase tracking-widest mb-5">Institucional</h3>
+            <ul class="space-y-2.5 text-sm text-white/50">
+              {[["Sobre o JusNews","/sobre"],["Política de Privacidade","/privacidade"],["Termos de Uso","/termos"],["Anuncie","/anuncie"],["Fale Conosco","/contato"]].map(([l,h])=>(
+                <li><a href={h} class="hover:text-gold transition-colors">{l}</a></li>
+              ))}
             </ul>
           </div>
 
         </div>
-        <p class="text-white/25 text-xs text-center pt-6">
-          © {year} JusNews — Todos os direitos reservados
-        </p>
+        <div class="pt-5 pb-2 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-white/20">
+          <span>© {year} JusNews — Todos os direitos reservados.</span>
+          <span class="hidden sm:block">Desenvolvido com propósito para transformar sonhos em aprovações.</span>
+        </div>
       </div>
     </footer>
 
