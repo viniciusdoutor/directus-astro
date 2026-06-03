@@ -1,41 +1,43 @@
 ---
 import CategoryBadge from "./CategoryBadge.astro";
 import TagPill from "./TagPill.astro";
-import { formatDate, getCategory, getTags, assetUrl } from "../lib/utils";
-import type { Post } from "../lib/directus";
+import CoverImage from "./CoverImage.astro";
+import { formatDate, assetUrl, categoryIcon } from "../lib/utils";
+import type { PostSummary } from "../lib/directus";
 
 interface Props {
-  post: Post;
+  post: PostSummary;
   directusUrl: string;
 }
 
 const { post, directusUrl } = Astro.props;
-const category = getCategory(post.category);
-const tags = getTags(post.tags);
+const category = post.category;
+const tags = post.tags.map(pt => pt.tags_id);
 const imgSrc = assetUrl(post.image, directusUrl, "width=600&height=340&fit=cover&quality=80");
-const catColor = category?.color ?? "#0f2340";
+const icon = categoryIcon(category?.slug ?? "");
 ---
 
 <article class="group bg-white rounded-lg overflow-hidden border border-border shadow-sm hover:shadow-md transition-all duration-200 flex flex-col h-full">
 
-  <!-- Image / fallback -->
-  <a href={`/blog/${post.slug}`} class="block overflow-hidden flex-shrink-0">
+  <!-- Capa -->
+  <a href={`/blog/${post.slug}`} class="block overflow-hidden flex-shrink-0 h-44">
     {imgSrc ? (
       <img
         src={imgSrc}
         alt={post.title}
-        class="w-full h-44 object-cover group-hover:scale-105 transition-transform duration-300"
+        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
         loading="lazy"
       />
     ) : (
-      <div
-        class="w-full h-44 flex items-center justify-center"
-        style={`background: linear-gradient(135deg, ${catColor}14 0%, ${catColor}30 100%); border-bottom: 2px solid ${catColor}40`}
-      >
-        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="opacity-25" style={`color: ${catColor}`}>
-          <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z" />
-        </svg>
-      </div>
+      <CoverImage
+        title={post.title}
+        slug={post.slug}
+        categoryName={category?.name}
+        categoryColor={category?.color ?? "#0f2340"}
+        icon={icon}
+        showTitle={true}
+        class="w-full h-full group-hover:scale-105 transition-transform duration-300"
+      />
     )}
   </a>
 

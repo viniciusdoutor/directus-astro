@@ -10,6 +10,7 @@ const { title, description = "O portal de referência em concursos de Direito no
 const year = new Date().getFullYear();
 const today = new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long", year: "numeric" });
 const todayLabel = today.charAt(0).toUpperCase() + today.slice(1);
+const pathname = Astro.url.pathname;
 ---
 
 <!doctype html>
@@ -19,7 +20,7 @@ const todayLabel = today.charAt(0).toUpperCase() + today.slice(1);
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <title>{title} — JusNews</title>
+    <title>{title} — Portal Golden Jus</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=IBM+Plex+Sans:wght@400;500;600&family=Lora:wght@400;500&display=swap" rel="stylesheet" />
@@ -58,11 +59,10 @@ const todayLabel = today.charAt(0).toUpperCase() + today.slice(1);
     <!-- Header -->
     <header class="sticky top-0 z-50 bg-white shadow-sm">
       <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between gap-6">
-        <a href="/" class="flex flex-col leading-none group flex-shrink-0">
-          <span class="font-display text-2xl font-bold text-ink tracking-tight group-hover:text-navy transition-colors">JusNews</span>
-          <span class="text-gold text-[10px] font-sans tracking-[0.2em] uppercase mt-0.5">Concursos &amp; Direito</span>
+        <a href="/" class="flex items-center flex-shrink-0 group">
+          <img src="/logo-golden-jus.svg" alt="Portal Golden Jus" class="h-12 w-auto" />
         </a>
-        <nav class="hidden md:flex items-center gap-6">
+        <nav class="hidden md:flex items-center gap-5">
           {[
             ["Início", "/"],
             ["Blog", "/blog"],
@@ -71,13 +71,25 @@ const todayLabel = today.charAt(0).toUpperCase() + today.slice(1);
             ["Jurisprudência", "/categoria/jurisprudencia"],
             ["Editais", "/categoria/editais-resultados"],
             ["Tribunais", "/categoria/stf-tribunais"],
-          ].map(([label, href]) => (
-            <a href={href} class="text-ink/65 hover:text-navy font-sans text-sm font-medium transition-colors">{label}</a>
-          ))}
+          ].map(([label, href]) => {
+            const isActive = href === "/" ? pathname === "/" : pathname.startsWith(href as string);
+            return (
+              <a
+                href={href}
+                class={`font-sans text-sm font-medium transition-colors whitespace-nowrap ${isActive ? "text-navy border-b-2 border-gold pb-0.5" : "text-ink/65 hover:text-navy"}`}
+              >{label}</a>
+            );
+          })}
         </nav>
-        <button class="w-9 h-9 rounded-full border border-border flex items-center justify-center text-muted hover:text-navy hover:border-navy transition-colors flex-shrink-0" aria-label="Buscar">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        </button>
+        <div class="flex items-center gap-2 flex-shrink-0">
+          <a href="/categoria/concursos-abertos" class="hidden lg:flex items-center gap-1.5 px-4 py-2 bg-gold text-navy text-xs font-sans font-bold rounded-full hover:bg-gold/90 transition-colors whitespace-nowrap">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>
+            Ver concursos
+          </a>
+          <button class="w-9 h-9 rounded-full border border-border flex items-center justify-center text-muted hover:text-navy hover:border-navy transition-colors" aria-label="Buscar">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </button>
+        </div>
       </div>
       <div class="h-px bg-gradient-to-r from-transparent via-gold/50 to-transparent"></div>
     </header>
@@ -86,66 +98,237 @@ const todayLabel = today.charAt(0).toUpperCase() + today.slice(1);
       <slot />
     </main>
 
-    <!-- Footer -->
-    <footer class="bg-navy text-white mt-0">
-      <div class="max-w-7xl mx-auto px-6 pt-12 pb-4">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 pb-10 border-b border-white/10">
+    <!-- Newsletter -->
+    <section class="bg-navy py-16 relative overflow-hidden">
+      <!-- Decoração: figura à direita da section (visível fora do card em viewports largas) -->
+      <div class="absolute right-0 top-0 h-full w-[30%] pointer-events-none select-none">
+        <div class="absolute inset-0 bg-gradient-to-r from-navy from-40% to-transparent z-10"></div>
+        <img src="/footer-decoration.png" alt="" class="h-full w-full object-contain object-right opacity-25" />
+      </div>
+      <div class="max-w-7xl mx-auto px-6 relative z-10">
+        <div class="border border-gold/30 rounded-2xl p-8 md:p-10">
+          <div class="flex flex-col md:flex-row items-center gap-10">
+            <div class="flex items-start gap-5 flex-shrink-0 max-w-sm">
+              <div class="w-14 h-14 rounded-full border-2 border-gold/40 flex items-center justify-center flex-shrink-0 mt-1">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#c8960c" stroke-width="1.8">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                  <polyline points="22,6 12,13 2,6"/>
+                </svg>
+              </div>
+              <div>
+                <h2 class="font-display font-bold text-white text-xl md:text-2xl leading-tight">
+                  Receba as principais notícias jurídicas
+                </h2>
+                <p class="text-white/45 text-sm mt-2 leading-relaxed">
+                  Conteúdo selecionado diariamente para impulsionar seus estudos e sua carreira.
+                </p>
+              </div>
+            </div>
+            <div class="flex-1 w-full max-w-md">
+              <form class="flex gap-2 mb-3" onsubmit="return false;">
+                <div class="relative flex-1">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="absolute left-3 top-1/2 -translate-y-1/2 text-white/30 pointer-events-none">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                    <polyline points="22,6 12,13 2,6"/>
+                  </svg>
+                  <input type="email" placeholder="Seu melhor e-mail" class="w-full pl-9 pr-4 py-3 bg-white/10 border border-white/20 text-white text-sm rounded-lg outline-none focus:border-gold/60 focus:bg-white/15 transition-all" style="color-scheme: dark;" />
+                </div>
+                <button type="submit" class="bg-gold hover:bg-amber-600 text-navy text-sm font-sans font-bold px-6 py-3 rounded-lg transition-colors whitespace-nowrap">
+                  Quero receber
+                </button>
+              </form>
+              <div class="flex items-center gap-1.5 text-white/30 text-xs font-sans">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>
+                <span>Seu e-mail está seguro conosco. Sem spam.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
 
+    <!-- Footer -->
+    <footer class="bg-navy text-white">
+      <div class="max-w-7xl mx-auto px-6 pt-14 pb-0">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 pb-12 border-b border-white/10">
+
+          <!-- Coluna 1: marca -->
           <div>
-            <a href="/" class="flex flex-col leading-none mb-4">
-              <span class="font-display text-xl font-bold text-white">JusNews</span>
-              <span class="text-gold text-[10px] font-sans tracking-[0.2em] uppercase mt-0.5">Concursos &amp; Direito</span>
+            <a href="/" class="inline-block mb-5">
+              <img src="/logo-golden-jus.svg" alt="Portal Golden Jus" class="h-10 w-auto brightness-0 invert" />
             </a>
-            <p class="text-white/40 text-sm leading-relaxed mb-5 max-w-xs">
+            <p class="text-white/40 text-sm leading-relaxed mb-6 max-w-xs">
               Referência em notícias, editais e conteúdo jurídico para concurseiros do Direito. Informação confiável. Conteúdo que aprova.
             </p>
             <div class="flex items-center gap-2.5">
-              {[
-                ["Facebook", "M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"],
-                ["Instagram", null],
-                ["LinkedIn", null],
-                ["YouTube", null],
-              ].map(([label]) => (
-                <a href="#" class="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center hover:bg-gold transition-colors text-white/70" aria-label={label as string}>
-                  {label === "Facebook" && <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/></svg>}
-                  {label === "Instagram" && <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>}
-                  {label === "LinkedIn" && <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-4 0v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z"/><circle cx="4" cy="4" r="2"/></svg>}
-                  {label === "YouTube" && <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M22.54 6.42a2.78 2.78 0 00-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46a2.78 2.78 0 00-1.95 1.96A29 29 0 001 12a29 29 0 00.46 5.58 2.78 2.78 0 001.95 1.96C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 001.95-1.96A29 29 0 0023 12a29 29 0 00-.46-5.58zM9.75 15.02V8.98L15.5 12l-5.75 3.02z"/></svg>}
-                </a>
-              ))}
+              <a href="#" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-gold transition-colors" aria-label="Facebook">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/></svg>
+              </a>
+              <a href="#" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-gold transition-colors" aria-label="Instagram">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+              </a>
+              <a href="#" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-gold transition-colors" aria-label="LinkedIn">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-4 0v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z"/><circle cx="4" cy="4" r="2"/></svg>
+              </a>
+              <a href="#" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-gold transition-colors" aria-label="YouTube">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M22.54 6.42a2.78 2.78 0 00-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46a2.78 2.78 0 00-1.95 1.96A29 29 0 001 12a29 29 0 00.46 5.58 2.78 2.78 0 001.95 1.96C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 001.95-1.96A29 29 0 0023 12a29 29 0 00-.46-5.58zM9.75 15.02V8.98L15.5 12l-5.75 3.02z"/></svg>
+              </a>
             </div>
           </div>
 
+          <!-- Coluna 2: links rápidos -->
           <div>
-            <h3 class="font-sans font-semibold text-gold text-[11px] uppercase tracking-widest mb-5">Seções</h3>
-            <ul class="space-y-2.5 text-sm text-white/50">
-              {[["Início","/"],["Blog","/blog"],["Concursos Abertos","/categoria/concursos-abertos"],["Dicas de Estudo","/categoria/dicas-estudo"],["Editais e Resultados","/categoria/editais-resultados"],["Jurisprudência","/categoria/jurisprudencia"]].map(([l,h])=>(
-                <li><a href={h} class="hover:text-gold transition-colors">{l}</a></li>
+            <h3 class="font-sans font-semibold text-gold text-[11px] uppercase tracking-widest mb-5">Links Rápidos</h3>
+            <ul class="text-sm">
+              {[
+                ["Início", "/"],
+                ["Blog", "/blog"],
+                ["Concursos Abertos", "/categoria/concursos-abertos"],
+                ["Dicas de Estudo", "/categoria/dicas-estudo"],
+                ["Editais e Resultados", "/categoria/editais-resultados"],
+                ["Jurisprudência", "/categoria/jurisprudencia"],
+              ].map(([l, h]) => (
+                <li class="border-b border-white/5 last:border-0">
+                  <a href={h} class="flex items-center justify-between py-2 text-white/50 hover:text-gold transition-colors group">
+                    <span>{l}</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="opacity-0 group-hover:opacity-60 transition-opacity flex-shrink-0">
+                      <polyline points="9 18 15 12 9 6"/>
+                    </svg>
+                  </a>
+                </li>
               ))}
             </ul>
           </div>
 
+          <!-- Coluna 3: categorias -->
           <div>
             <h3 class="font-sans font-semibold text-gold text-[11px] uppercase tracking-widest mb-5">Categorias</h3>
-            <ul class="space-y-2.5 text-sm text-white/50">
-              {[["STF e Tribunais","/categoria/stf-tribunais"],["Concursos Estaduais","/categoria/concursos-estaduais"],["Legislação","/categoria/legislacao"],["Editais e Resultados","/categoria/editais-resultados"],["Carreiras Jurídicas","/categoria/carreiras"]].map(([l,h])=>(
-                <li><a href={h} class="hover:text-gold transition-colors">{l}</a></li>
+            <ul class="text-sm">
+              {[
+                ["STF e Tribunais", "/categoria/stf-tribunais"],
+                ["Concursos Estaduais", "/categoria/concursos-estaduais"],
+                ["Legislação", "/categoria/legislacao"],
+                ["Editais e Resultados", "/categoria/editais-resultados"],
+                ["Carreiras Jurídicas", "/categoria/carreiras"],
+                ["Direito Administrativo", "/categoria/direito-administrativo"],
+              ].map(([l, h]) => (
+                <li class="border-b border-white/5 last:border-0">
+                  <a href={h} class="flex items-center justify-between py-2 text-white/50 hover:text-gold transition-colors group">
+                    <span>{l}</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="opacity-0 group-hover:opacity-60 transition-opacity flex-shrink-0">
+                      <polyline points="9 18 15 12 9 6"/>
+                    </svg>
+                  </a>
+                </li>
               ))}
             </ul>
           </div>
 
+          <!-- Coluna 4: confiança e contato -->
           <div>
-            <h3 class="font-sans font-semibold text-gold text-[11px] uppercase tracking-widest mb-5">Institucional</h3>
-            <ul class="space-y-2.5 text-sm text-white/50">
-              {[["Sobre o JusNews","/sobre"],["Política de Privacidade","/privacidade"],["Termos de Uso","/termos"],["Anuncie","/anuncie"],["Fale Conosco","/contato"]].map(([l,h])=>(
-                <li><a href={h} class="hover:text-gold transition-colors">{l}</a></li>
-              ))}
-            </ul>
+            <h3 class="font-sans font-semibold text-gold text-[11px] uppercase tracking-widest mb-5">Confiança &amp; Contato</h3>
+            <div class="space-y-4 mb-6">
+              <div class="flex items-start gap-3">
+                <div class="w-8 h-8 rounded-full bg-gold/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c8960c" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                </div>
+                <div>
+                  <p class="text-white/80 text-sm font-medium leading-tight">Conteúdo verificado</p>
+                  <p class="text-white/30 text-xs mt-0.5">Editado por profissionais do Direito</p>
+                </div>
+              </div>
+              <div class="flex items-start gap-3">
+                <div class="w-8 h-8 rounded-full bg-gold/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c8960c" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                </div>
+                <div>
+                  <p class="text-white/80 text-sm font-medium leading-tight">Atualização diária</p>
+                  <p class="text-white/30 text-xs mt-0.5">Publicamos todos os dias úteis</p>
+                </div>
+              </div>
+              <div class="flex items-start gap-3">
+                <div class="w-8 h-8 rounded-full bg-gold/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c8960c" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                </div>
+                <div>
+                  <p class="text-white/80 text-sm font-medium leading-tight">Acesso gratuito</p>
+                  <p class="text-white/30 text-xs mt-0.5">Todo conteúdo sem paywall</p>
+                </div>
+              </div>
+            </div>
+            <div class="space-y-2.5 pt-4 border-t border-white/10">
+              <a href="mailto:contato@goldenjus.com.br" class="flex items-center gap-2 text-sm text-white/45 hover:text-gold transition-colors">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                  <polyline points="22,6 12,13 2,6"/>
+                </svg>
+                contato@goldenjus.com.br
+              </a>
+              <a href="tel:+5511987654321" class="flex items-center gap-2 text-sm text-white/45 hover:text-gold transition-colors">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.86 9.81 19.79 19.79 0 01.79 1.19 2 2 0 012.77 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L7.09 7.91a16 16 0 006 6l.91-.91a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/>
+                </svg>
+                (11) 98765-4321
+              </a>
+            </div>
           </div>
 
         </div>
-        <div class="pt-5 pb-2 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-white/20">
-          <span>© {year} JusNews — Todos os direitos reservados.</span>
+
+        <!-- Barra de métricas -->
+        <div class="grid grid-cols-2 md:grid-cols-4 divide-x divide-white/10 border-b border-white/10">
+          <div class="flex items-center gap-4 px-6 py-7">
+            <div class="w-9 h-9 rounded-full bg-gold/15 flex items-center justify-center flex-shrink-0">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c8960c" stroke-width="1.8">
+                <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
+              </svg>
+            </div>
+            <div>
+              <p class="text-white font-display font-bold text-lg leading-tight">50.000+</p>
+              <p class="text-white/35 text-xs font-sans">Leitores mensais</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-4 px-6 py-7">
+            <div class="w-9 h-9 rounded-full bg-gold/15 flex items-center justify-center flex-shrink-0">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c8960c" stroke-width="1.8">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
+              </svg>
+            </div>
+            <div>
+              <p class="text-white font-display font-bold text-lg leading-tight">2.400+</p>
+              <p class="text-white/35 text-xs font-sans">Artigos publicados</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-4 px-6 py-7">
+            <div class="w-9 h-9 rounded-full bg-gold/15 flex items-center justify-center flex-shrink-0">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c8960c" stroke-width="1.8">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              </svg>
+            </div>
+            <div>
+              <p class="text-white font-display font-bold text-lg leading-tight">100%</p>
+              <p class="text-white/35 text-xs font-sans">Conteúdo verificado</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-4 px-6 py-7">
+            <div class="w-9 h-9 rounded-full bg-gold/15 flex items-center justify-center flex-shrink-0">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c8960c" stroke-width="1.8">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
+            </div>
+            <div>
+              <p class="text-white font-display font-bold text-lg leading-tight">Diário</p>
+              <p class="text-white/35 text-xs font-sans">Editais atualizados</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Copyright -->
+        <div class="py-5 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-white/20">
+          <span>© {year} Portal Golden Jus — Todos os direitos reservados.</span>
           <span class="hidden sm:block">Desenvolvido com propósito para transformar sonhos em aprovações.</span>
         </div>
       </div>

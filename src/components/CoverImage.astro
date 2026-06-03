@@ -1,0 +1,137 @@
+---
+interface Props {
+  title: string;
+  slug: string;
+  categoryName?: string;
+  categoryColor?: string;
+  icon?: string;
+  showTitle?: boolean;
+  class?: string;
+}
+
+const {
+  title,
+  slug,
+  categoryName = "",
+  categoryColor = "#0f2340",
+  icon = "shield",
+  showTitle = true,
+  class: cls = "",
+} = Astro.props;
+
+// Deterministic hash para variação visual por post
+function djb2(s: string): number {
+  let h = 5381;
+  for (let i = 0; i < s.length; i++) h = (((h << 5) + h) ^ s.charCodeAt(i)) >>> 0;
+  return h;
+}
+const hv = djb2(slug);
+const gid = "jn" + slug.replace(/[^a-z0-9]/gi, "").slice(0, 20);
+
+// Variações por post: posição dos círculos decorativos e ângulo de gradiente
+const cx1 = 560 + (hv % 60) - 30;
+const cy1 =  70 + (hv % 40) - 20;
+const cx2 = cx1 + 50 + (hv % 20) - 10;
+const cy2 = cy1 - 25 + (hv % 20) - 10;
+
+// Quebra de texto para o SVG (máx 22 chars/linha, 3 linhas)
+function wrap(text: string, maxLen = 22): string[] {
+  const words = text.split(" ");
+  const lines: string[] = [];
+  let line = "";
+  for (const w of words) {
+    const candidate = line ? `${line} ${w}` : w;
+    if (candidate.length <= maxLen) { line = candidate; }
+    else { if (line) lines.push(line); line = w; }
+  }
+  if (line) lines.push(line);
+  return lines.slice(0, 3);
+}
+
+const titleLines = showTitle ? wrap(title) : [];
+const badgeW = categoryName ? Math.min(categoryName.length * 8.2 + 28, 210) : 0;
+
+// Ícone SVG path
+const icons: Record<string, string> = {
+  briefcase: "M10 2C8.9 2 8 2.9 8 4H4C2.9 4 2 4.9 2 6V18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V6C22 4.9 21.1 4 20 4H16C16 2.9 15.1 2 14 2H10M10 4H14V6H10V4Z",
+  building:  "M4 10v7h3v-7H4zm6 0v7h3v-7h-3zM2 22h19v-3H2v3zm14-12v7h3v-7h-3zM11.5 1L2 6v2h19V6z",
+  book:      "M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z",
+  document:  "M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z",
+  scales:    "M17 8C8 10 5.9 16.17 3.82 22H5.71C6.66 19.91 7 19 8 17c1-1 3-2 4-2-1 1.17-1 2.13-1 3.08C10.68 17.18 10 16 9 15.53 9 17.24 9.77 18.9 11 20.07V22h2v-1.94C14.23 18.9 15 17.24 15 15.53 14 16 13.32 17.18 13 18.08 13 17.13 13 16.17 12 15c1 0 3 1 4 2 1 2 1.34 2.91 2.29 5H20.18C18.1 16.17 16 10 17 8zM12 3C10.35 3 9 4.35 9 6s1.35 3 3 3 3-1.35 3-3-1.35-3-3-3z",
+  shield:    "M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z",
+  gavel:     "M1 21h12v2H1v-2zm5.5-4h-2v4h2v-4zm5-2h-2v6h2v-6zm5-2h-2v8h2v-8zM10.07 13.27c.47-.07.98-.27 1.43-.27.43 0 .6.09.6.47 0 .37-.87.69-1.2.87L2 18l.7 1.75 8.9-3.89c.87-.38 1.4-1.17 1.4-2.13 0-1.5-1.2-2.23-2.63-2.23-.87 0-1.67.27-2.44.55L2 14.5l.7 1.75 7.37-2.98z",
+};
+const iconPath = icons[icon] ?? icons.shield;
+---
+
+<svg
+  class={cls}
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 700 440"
+  preserveAspectRatio="xMidYMid slice"
+  aria-label={title}
+  role="img"
+>
+  <defs>
+    <!-- gradiente de fundo único por post -->
+    <linearGradient id={gid} x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color={categoryColor} />
+      <stop offset="100%" stop-color="#040c1a" />
+    </linearGradient>
+    <!-- overlay escuro para legibilidade do título -->
+    <linearGradient id={`${gid}ov`} x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#000" stop-opacity="0"    />
+      <stop offset="50%"  stop-color="#000" stop-opacity="0.55" />
+      <stop offset="100%" stop-color="#000" stop-opacity="0.82" />
+    </linearGradient>
+  </defs>
+
+  <!-- fundo gradiente -->
+  <rect width="700" height="440" fill={`url(#${gid})`} />
+
+  <!-- círculos decorativos únicos por post -->
+  <circle cx={cx1} cy={cy1} r="230" fill="white" fill-opacity="0.04" />
+  <circle cx={cx2} cy={cy2} r="130" fill="white" fill-opacity="0.05" />
+
+  <!-- ícone de categoria em watermark -->
+  <g transform="translate(440, 48)" fill="white" fill-opacity="0.1">
+    <path transform="scale(8.5)" d={iconPath} />
+  </g>
+
+  <!-- overlay de texto (sempre presente — só escurece a parte inferior) -->
+  <rect width="700" height="440" fill={`url(#${gid}ov)`} />
+
+  <!-- badge de categoria -->
+  {categoryName && (
+    <>
+      <rect x="24" y="24" rx="4" width={badgeW} height="27" fill="white" fill-opacity="0.18" />
+      <text
+        x="36" y="42"
+        font-family="'IBM Plex Sans', system-ui, sans-serif"
+        font-size="11" font-weight="700"
+        fill="white" fill-opacity="0.9"
+        letter-spacing="1.5"
+      >{categoryName.toUpperCase()}</text>
+    </>
+  )}
+
+  <!-- linhas de título (ancoras no fundo) -->
+  {titleLines.map((line, i) => (
+    <text
+      x="28"
+      y={364 - (titleLines.length - 1 - i) * 52}
+      font-family="'Playfair Display', Georgia, serif"
+      font-size="44" font-weight="700"
+      fill="white" fill-opacity="0.95"
+    >{line}</text>
+  ))}
+
+  <!-- marca Portal Golden Jus -->
+  <text
+    x="676" y="424"
+    font-family="'Playfair Display', Georgia, serif"
+    font-size="14" font-weight="700"
+    fill="white" fill-opacity="0.22"
+    text-anchor="end"
+  >Portal Golden Jus</text>
+</svg>

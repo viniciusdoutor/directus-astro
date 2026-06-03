@@ -1,33 +1,20 @@
 ---
 import Layout from "../../layouts/Layout.astro";
-import directus from "../../lib/directus";
-import { readItems } from "@directus/sdk";
+import { fetchPosts, fetchCategories, fetchTags } from "../../lib/queries";
 import PostCard from "../../components/PostCard.astro";
 import Sidebar from "../../components/Sidebar.astro";
 
 const directusUrl = import.meta.env.PUBLIC_DIRECTUS_URL;
 
-const POST_FIELDS = [
-  "id", "title", "slug", "excerpt", "published_date", "reading_time", "image", "featured",
-  { category: ["id", "name", "slug", "color"] },
-  { tags: [{ tags_id: ["id", "name", "slug"] }] },
-] as const;
-
 const [posts, categories, tags] = await Promise.all([
-  directus.request(readItems("posts", {
-    filter: { status: { _eq: "published" } },
-    fields: POST_FIELDS as any,
-    sort: ["-published_date"],
-    limit: 24,
-  })),
-  directus.request(readItems("categories", { fields: ["id", "name", "slug", "color", "description"], sort: ["name"] })),
-  directus.request(readItems("tags", { fields: ["id", "name", "slug"], sort: ["name"] })),
+  fetchPosts({ limit: 24 }),
+  fetchCategories(),
+  fetchTags(),
 ]);
 ---
 
 <Layout title="Blog" description="Notícias, editais e dicas para concurseiros do Direito">
 
-  <!-- Page header -->
   <div class="bg-white border-b border-border">
     <div class="max-w-7xl mx-auto px-6 py-8">
       <p class="text-xs font-sans text-muted mb-1">
@@ -42,7 +29,6 @@ const [posts, categories, tags] = await Promise.all([
     </div>
   </div>
 
-  <!-- Category filter strip -->
   <div class="bg-paper border-b border-border overflow-x-auto">
     <div class="max-w-7xl mx-auto px-6 py-3 flex items-center gap-2 min-w-max">
       <a href="/blog" class="px-3 py-1.5 text-xs font-sans font-semibold rounded-full border border-navy bg-navy text-white no-underline">
@@ -60,18 +46,14 @@ const [posts, categories, tags] = await Promise.all([
     </div>
   </div>
 
-  <!-- Content + Sidebar -->
   <div class="max-w-7xl mx-auto px-6 py-10">
     <div class="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-10">
-
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6 content-start">
         {posts.map(post => (
-          <PostCard post={post as any} directusUrl={directusUrl} />
+          <PostCard post={post} directusUrl={directusUrl} />
         ))}
       </div>
-
       <Sidebar categories={categories} tags={tags} />
-
     </div>
   </div>
 

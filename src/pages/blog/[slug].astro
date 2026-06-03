@@ -1,133 +1,344 @@
 ---
 import Layout from "../../layouts/Layout.astro";
-import directus from "../../lib/directus";
-import { readItems } from "@directus/sdk";
 import PostCard from "../../components/PostCard.astro";
 import CategoryBadge from "../../components/CategoryBadge.astro";
 import TagPill from "../../components/TagPill.astro";
-import { formatDate, getCategory, getTags, assetUrl, authorName } from "../../lib/utils";
-
-const POST_FIELDS = [
-  "id", "title", "slug", "excerpt", "content", "published_date", "reading_time", "image", "featured",
-  { author: ["first_name", "last_name"] },
-  { category: ["id", "name", "slug", "color"] },
-  { tags: [{ tags_id: ["id", "name", "slug"] }] },
-] as const;
+import CoverImage from "../../components/CoverImage.astro";
+import {
+  fetchAllPostsExpanded,
+  fetchRecentPosts,
+  fetchRelatedPosts,
+} from "../../lib/queries";
+import { formatDate, assetUrl, authorName, categoryIcon } from "../../lib/utils";
 
 export async function getStaticPaths() {
-  const posts = await directus.request(
-    readItems("posts", {
-      filter: { status: { _eq: "published" } },
-      fields: [
-        "id", "title", "slug", "excerpt", "content", "published_date", "reading_time", "image", "featured",
-        { author: ["first_name", "last_name"] },
-        { category: ["id", "name", "slug", "color"] },
-        { tags: [{ tags_id: ["id", "name", "slug"] }] },
-      ] as any,
-    })
-  );
+  const posts = await fetchAllPostsExpanded();
   return posts.map(post => ({ params: { slug: post.slug }, props: { post } }));
 }
 
 const { post } = Astro.props;
 const directusUrl = import.meta.env.PUBLIC_DIRECTUS_URL;
-const category = getCategory(post.category);
-const tags = getTags(post.tags as any);
+
+const category = post.category;
+const tags = post.tags.map(pt => pt.tags_id);
 const author = authorName(post.author);
 const heroImg = assetUrl(post.image, directusUrl, "width=1200&height=520&fit=cover&quality=85");
+const icon = categoryIcon(category?.slug ?? "");
 
-const related = await directus.request(
-  readItems("posts", {
-    filter: {
-      status: { _eq: "published" },
-      slug: { _neq: post.slug },
-      ...(category ? { category: { slug: { _eq: category.slug } } } : {}),
-    },
-    fields: [
-      "id", "title", "slug", "excerpt", "published_date", "reading_time", "image",
-      { category: ["id", "name", "slug", "color"] },
-      { tags: [{ tags_id: ["id", "name", "slug"] }] },
-    ] as any,
-    limit: 3,
-    sort: ["-published_date"],
-  })
+function getInitials(name: string | null): string {
+  if (!name) return "R";
+  const parts = name.trim().split(" ");
+  return parts.length === 1
+    ? parts[0][0].toUpperCase()
+    : (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+const authorInitials = getInitials(author);
+
+const isEdital = category?.slug === "editais-resultados";
+const hasEdital = isEdital && !!(
+  post.edital_org || post.edital_vagas || post.edital_cargos || post.edital_salario
 );
+
+const [recentPosts, related] = await Promise.all([
+  fetchRecentPosts(3, post.slug),
+  fetchRelatedPosts(post.slug, category?.slug ?? null, 3),
+]);
+
+const pageUrl = Astro.url.href;
+const pageTitle = encodeURIComponent(post.title);
+const pageHref = encodeURIComponent(pageUrl);
 ---
 
 <Layout title={post.title} description={post.excerpt ?? undefined}>
 
-  <!-- Article header -->
-  <div class="max-w-3xl mx-auto px-6 pt-10 pb-6">
-    <p class="text-xs font-sans text-muted mb-4">
-      <a href="/" class="hover:text-gold transition-colors no-underline">Início</a>
-      <span class="mx-1.5">›</span>
-      <a href="/blog" class="hover:text-gold transition-colors no-underline">Blog</a>
-      {category && (
-        <>
-          <span class="mx-1.5">›</span>
-          <a href={`/categoria/${category.slug}`} class="hover:text-gold transition-colors no-underline">
-            {category.name}
-          </a>
-        </>
-      )}
-    </p>
-
-    {category && (
-      <div class="mb-4">
-        <CategoryBadge name={category.name} slug={category.slug} color={category.color} />
-      </div>
-    )}
-
-    <h1 class="font-display font-bold text-4xl md:text-5xl text-ink leading-tight mb-4">
-      {post.title}
-    </h1>
-
-    {post.excerpt && (
-      <p class="text-xl text-muted font-serif leading-relaxed mb-5">{post.excerpt}</p>
-    )}
-
-    <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm font-sans text-muted pb-6 border-b border-border">
-      {author && <span class="font-medium text-ink">{author}</span>}
-      <span>{formatDate(post.published_date)}</span>
-      {post.reading_time && <span>{post.reading_time} min de leitura</span>}
+  <!-- Breadcrumb -->
+  <div class="bg-paper border-b border-border">
+    <div class="max-w-7xl mx-auto px-6 py-3">
+      <nav class="flex items-center gap-1.5 text-xs font-sans text-muted flex-wrap">
+        <a href="/" class="hover:text-gold transition-colors">Início</a>
+        <span class="text-border">›</span>
+        <a href="/blog" class="hover:text-gold transition-colors">Blog</a>
+        {category && (
+          <>
+            <span class="text-border">›</span>
+            <a href={`/categoria/${category.slug}`} class="hover:text-gold transition-colors">{category.name}</a>
+          </>
+        )}
+        <span class="text-border">›</span>
+        <span class="text-ink/60 line-clamp-1 max-w-xs">{post.title}</span>
+      </nav>
     </div>
   </div>
 
-  <!-- Hero image -->
-  {heroImg && (
-    <div class="max-w-5xl mx-auto px-6 mb-10">
-      <img src={heroImg} alt={post.title} class="w-full rounded-xl shadow-md object-cover max-h-[480px]" />
+  <!-- Grid principal -->
+  <div class="max-w-7xl mx-auto px-6 py-10">
+    <div class="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-10 items-start">
+
+      <!-- Coluna do artigo -->
+      <article>
+        {category && (
+          <div class="mb-5">
+            <CategoryBadge name={category.name} slug={category.slug} color={category.color} />
+          </div>
+        )}
+
+        <h1 class="font-display font-bold text-4xl md:text-5xl text-ink leading-tight mb-5">
+          {post.title}
+        </h1>
+
+        {post.excerpt && (
+          <p class="text-lg font-serif text-ink/70 leading-relaxed mb-7 pl-4 border-l-4 border-gold">
+            {post.excerpt}
+          </p>
+        )}
+
+        <!-- Barra do autor -->
+        <div class="flex items-center gap-3 py-4 border-y border-border mb-8">
+          <div
+            class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-white text-sm font-sans font-bold"
+            style={`background-color: ${category?.color ?? "#0f2340"}`}
+          >
+            {authorInitials}
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="font-sans font-semibold text-sm text-ink">{author ?? "Redação Portal Golden Jus"}</div>
+            <div class="flex items-center gap-2 text-xs text-muted font-sans flex-wrap">
+              <span>{formatDate(post.published_date)}</span>
+              {post.reading_time && (
+                <>
+                  <span class="text-border">·</span>
+                  <span>{post.reading_time} min de leitura</span>
+                </>
+              )}
+            </div>
+          </div>
+          <div class="flex items-center gap-2 flex-shrink-0">
+            <button class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-sans font-medium text-muted border border-border rounded-full hover:text-navy hover:border-navy transition-colors">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
+              Salvar
+            </button>
+            <button
+              id="share-header-btn"
+              data-url={pageUrl}
+              class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-xs font-sans font-medium text-white bg-navy rounded-full hover:opacity-90 transition-opacity"
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+              Compartilhar
+            </button>
+          </div>
+        </div>
+
+        <!-- Imagem hero -->
+        <div class="mb-8 rounded-xl overflow-hidden shadow-sm">
+          {heroImg ? (
+            <img src={heroImg} alt={post.title} class="w-full object-cover max-h-[480px]" />
+          ) : (
+            <CoverImage
+              title={post.title}
+              slug={post.slug}
+              categoryName={category?.name}
+              categoryColor={category?.color ?? "#0f2340"}
+              icon={icon}
+              showTitle={false}
+              class="w-full h-64 md:h-80"
+            />
+          )}
+        </div>
+
+        <!-- Corpo do artigo -->
+        <div class="prose prose-lg max-w-none
+          prose-headings:font-display prose-headings:text-ink prose-headings:font-bold
+          prose-h2:text-2xl prose-h2:mt-10 prose-h2:mb-4
+          prose-h3:text-xl prose-h3:mt-8 prose-h3:mb-3
+          prose-p:text-ink/85 prose-p:leading-relaxed prose-p:font-serif
+          prose-a:text-gold prose-a:no-underline hover:prose-a:underline
+          prose-strong:text-ink prose-strong:font-semibold
+          prose-ul:text-ink/85 prose-ol:text-ink/85
+          prose-li:leading-relaxed prose-li:font-serif
+          prose-blockquote:border-l-4 prose-blockquote:border-gold prose-blockquote:bg-paper/60 prose-blockquote:py-1 prose-blockquote:text-muted
+          prose-table:text-sm prose-thead:bg-paper prose-th:font-sans prose-th:font-semibold prose-th:text-ink prose-th:py-2 prose-td:py-2 prose-td:border-border">
+          <Fragment set:html={post.content} />
+        </div>
+
+        <!-- Tags -->
+        {tags.length > 0 && (
+          <div class="mt-10 pt-6 border-t border-border flex flex-wrap items-center gap-2">
+            <span class="text-xs font-sans font-semibold text-muted uppercase tracking-widest mr-1">Tags:</span>
+            {tags.map(tag => <TagPill name={tag.name} slug={tag.slug} />)}
+          </div>
+        )}
+      </article>
+
+      <!-- Sidebar -->
+      <aside class="lg:sticky lg:top-24 space-y-5">
+
+        <!-- Resumo do Edital — só para categoria editais-resultados -->
+        {hasEdital && (
+          <div class="bg-white border border-border rounded-xl shadow-sm overflow-hidden">
+            <div class="bg-navy px-5 py-3.5 flex items-center gap-2">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="#c8960c"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+              <h3 class="font-sans font-bold text-sm text-white uppercase tracking-wider">Resumo do Edital</h3>
+            </div>
+            <div class="divide-y divide-border">
+              {post.edital_org && (
+                <div class="px-5 py-3 flex items-start justify-between gap-3">
+                  <span class="text-[11px] font-sans font-semibold text-muted uppercase tracking-wide flex-shrink-0 mt-0.5">Organização</span>
+                  <span class="text-sm font-sans font-bold text-ink text-right">{post.edital_org}</span>
+                </div>
+              )}
+              {post.edital_vagas && (
+                <div class="px-5 py-3 flex items-start justify-between gap-3">
+                  <span class="text-[11px] font-sans font-semibold text-muted uppercase tracking-wide flex-shrink-0 mt-0.5">Vagas</span>
+                  <span class="text-sm font-sans font-bold text-ink text-right">{post.edital_vagas.toLocaleString("pt-BR")} vagas</span>
+                </div>
+              )}
+              {post.edital_cargos && (
+                <div class="px-5 py-3 flex items-start justify-between gap-3">
+                  <span class="text-[11px] font-sans font-semibold text-muted uppercase tracking-wide flex-shrink-0 mt-0.5">Cargos</span>
+                  <span class="text-sm font-sans text-ink text-right leading-snug">{post.edital_cargos}</span>
+                </div>
+              )}
+              {post.edital_salario && (
+                <div class="px-5 py-3 flex items-start justify-between gap-3">
+                  <span class="text-[11px] font-sans font-semibold text-muted uppercase tracking-wide flex-shrink-0 mt-0.5">Salário</span>
+                  <span class="text-sm font-sans font-bold text-gold text-right">{post.edital_salario}</span>
+                </div>
+              )}
+              {post.edital_escolaridade && (
+                <div class="px-5 py-3 flex items-start justify-between gap-3">
+                  <span class="text-[11px] font-sans font-semibold text-muted uppercase tracking-wide flex-shrink-0 mt-0.5">Escolaridade</span>
+                  <span class="text-sm font-sans text-ink text-right">{post.edital_escolaridade}</span>
+                </div>
+              )}
+              {post.edital_inscricoes && (
+                <div class="px-5 py-3 flex items-start justify-between gap-3">
+                  <span class="text-[11px] font-sans font-semibold text-muted uppercase tracking-wide flex-shrink-0 mt-0.5">Inscrições</span>
+                  <span class="text-sm font-sans text-ink text-right leading-snug">{post.edital_inscricoes}</span>
+                </div>
+              )}
+              {post.edital_banca && (
+                <div class="px-5 py-3 flex items-start justify-between gap-3">
+                  <span class="text-[11px] font-sans font-semibold text-muted uppercase tracking-wide flex-shrink-0 mt-0.5">Banca</span>
+                  <span class="text-sm font-sans text-ink text-right">{post.edital_banca}</span>
+                </div>
+              )}
+            </div>
+            {post.edital_link && (
+              <div class="p-4 bg-paper/40 border-t border-border">
+                <a
+                  href={post.edital_link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="block w-full text-center py-2.5 px-4 bg-gold text-navy text-sm font-sans font-bold rounded-lg hover:bg-gold/90 transition-colors"
+                >
+                  Acessar edital completo ↗
+                </a>
+              </div>
+            )}
+          </div>
+        )}
+
+        <!-- Compartilhe -->
+        <div class="bg-white border border-border rounded-xl shadow-sm overflow-hidden">
+          <div class="px-5 py-3.5 border-b border-border">
+            <h3 class="font-sans font-bold text-sm text-ink">Compartilhe este artigo</h3>
+          </div>
+          <div class="p-4 grid grid-cols-2 gap-2">
+            <a
+              href={`https://wa.me/?text=${pageTitle}%20${pageHref}`}
+              target="_blank" rel="noopener noreferrer"
+              class="flex items-center gap-2 px-3 py-2.5 bg-[#25D366] text-white text-xs font-sans font-semibold rounded-lg hover:opacity-90 transition-opacity"
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+              WhatsApp
+            </a>
+            <a
+              href={`https://www.facebook.com/sharer/sharer.php?u=${pageHref}`}
+              target="_blank" rel="noopener noreferrer"
+              class="flex items-center gap-2 px-3 py-2.5 bg-[#1877F2] text-white text-xs font-sans font-semibold rounded-lg hover:opacity-90 transition-opacity"
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/></svg>
+              Facebook
+            </a>
+            <a
+              href={`https://twitter.com/intent/tweet?text=${pageTitle}&url=${pageHref}`}
+              target="_blank" rel="noopener noreferrer"
+              class="flex items-center gap-2 px-3 py-2.5 bg-black text-white text-xs font-sans font-semibold rounded-lg hover:opacity-90 transition-opacity"
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.742l7.74-8.867L1.254 2.25H8.08l4.261 5.636zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+              X / Twitter
+            </a>
+            <a
+              href={`https://www.linkedin.com/sharing/share-offsite/?url=${pageHref}`}
+              target="_blank" rel="noopener noreferrer"
+              class="flex items-center gap-2 px-3 py-2.5 bg-[#0A66C2] text-white text-xs font-sans font-semibold rounded-lg hover:opacity-90 transition-opacity"
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-4 0v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z"/><circle cx="4" cy="4" r="2"/></svg>
+              LinkedIn
+            </a>
+          </div>
+          <div class="px-4 pb-4">
+            <button
+              id="copy-link-btn"
+              data-url={pageUrl}
+              class="w-full flex items-center justify-center gap-2 px-3 py-2.5 bg-paper border border-border text-xs font-sans font-semibold text-muted rounded-lg hover:border-navy hover:text-navy transition-colors"
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+              Copiar link
+            </button>
+          </div>
+        </div>
+
+        <!-- Últimas notícias -->
+        <div class="bg-white border border-border rounded-xl shadow-sm overflow-hidden">
+          <div class="px-5 py-3.5 border-b border-border flex items-center justify-between">
+            <h3 class="font-sans font-bold text-sm text-ink uppercase tracking-wide">Últimas notícias</h3>
+            <div class="h-0.5 w-6 bg-gold"></div>
+          </div>
+          <div class="divide-y divide-border">
+            {recentPosts.map(rp => {
+              const rpCat = rp.category;
+              const rpImg = assetUrl(rp.image, directusUrl, "width=120&height=90&fit=cover&quality=70");
+              const rpIcon = categoryIcon(rpCat?.slug ?? "");
+              return (
+                <a href={`/blog/${rp.slug}`} class="flex gap-3 p-4 hover:bg-paper/40 transition-colors group no-underline">
+                  <div class="w-20 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-paper">
+                    {rpImg ? (
+                      <img src={rpImg} alt={rp.title} class="w-full h-full object-cover" loading="lazy" />
+                    ) : (
+                      <CoverImage
+                        title={rp.title}
+                        slug={rp.slug}
+                        categoryName={rpCat?.name}
+                        categoryColor={rpCat?.color ?? "#0f2340"}
+                        icon={rpIcon}
+                        showTitle={false}
+                        class="w-full h-full"
+                      />
+                    )}
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <h4 class="font-sans font-semibold text-xs text-ink leading-snug line-clamp-3 group-hover:text-navy transition-colors">
+                      {rp.title}
+                    </h4>
+                    <p class="text-[11px] font-sans text-muted mt-1.5">{formatDate(rp.published_date)}</p>
+                  </div>
+                </a>
+              );
+            })}
+          </div>
+          <div class="px-4 py-3 border-t border-border bg-paper/30">
+            <a href="/blog" class="block text-center text-xs font-sans font-semibold text-gold hover:text-navy transition-colors">
+              Ver todas as notícias →
+            </a>
+          </div>
+        </div>
+
+      </aside>
     </div>
-  )}
+  </div>
 
-  <!-- Article body -->
-  <article class="max-w-3xl mx-auto px-6 pb-12">
-    <div class="prose prose-lg max-w-none
-      prose-headings:font-display prose-headings:text-ink prose-headings:font-bold
-      prose-h2:text-2xl prose-h2:mt-8 prose-h2:mb-3
-      prose-h3:text-xl prose-h3:mt-6 prose-h3:mb-2
-      prose-p:text-ink/90 prose-p:leading-relaxed
-      prose-a:text-gold prose-a:no-underline hover:prose-a:underline
-      prose-strong:text-ink prose-strong:font-semibold
-      prose-ul:text-ink/90 prose-ol:text-ink/90
-      prose-li:leading-relaxed
-      prose-table:text-sm
-      prose-thead:bg-paper prose-th:font-sans prose-th:font-semibold prose-th:text-ink prose-th:py-2
-      prose-td:border-border prose-td:py-2
-      prose-blockquote:border-gold prose-blockquote:text-muted">
-      <Fragment set:html={post.content} />
-    </div>
-
-    <!-- Tags -->
-    {tags.length > 0 && (
-      <div class="mt-8 pt-6 border-t border-border flex flex-wrap items-center gap-2">
-        <span class="text-xs font-sans font-semibold text-muted uppercase tracking-widest">Tags:</span>
-        {tags.map(tag => <TagPill name={tag.name} slug={tag.slug} />)}
-      </div>
-    )}
-  </article>
-
-  <!-- Related posts -->
+  <!-- Posts relacionados -->
   {related.length > 0 && (
     <section class="bg-paper border-t border-border py-12">
       <div class="max-w-7xl mx-auto px-6">
@@ -143,10 +354,42 @@ const related = await directus.request(
           </a>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {related.map(p => <PostCard post={p as any} directusUrl={directusUrl} />)}
+          {related.map(p => <PostCard post={p} directusUrl={directusUrl} />)}
         </div>
       </div>
     </section>
   )}
 
 </Layout>
+
+<script>
+  const copyBtn = document.getElementById("copy-link-btn");
+  if (copyBtn) {
+    copyBtn.addEventListener("click", async () => {
+      const url = copyBtn.getAttribute("data-url") ?? window.location.href;
+      try {
+        await navigator.clipboard.writeText(url);
+        const orig = copyBtn.innerHTML;
+        copyBtn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Copiado!`;
+        setTimeout(() => { copyBtn.innerHTML = orig; }, 2000);
+      } catch {}
+    });
+  }
+
+  const shareBtn = document.getElementById("share-header-btn");
+  if (shareBtn) {
+    shareBtn.addEventListener("click", async () => {
+      const url = shareBtn.getAttribute("data-url") ?? window.location.href;
+      if (navigator.share) {
+        try { await navigator.share({ title: document.title, url }); } catch {}
+      } else {
+        try {
+          await navigator.clipboard.writeText(url);
+          const orig = shareBtn.innerHTML;
+          shareBtn.innerHTML = "Link copiado!";
+          setTimeout(() => { shareBtn.innerHTML = orig; }, 2000);
+        } catch {}
+      }
+    });
+  }
+</script>

@@ -52,6 +52,46 @@ export type Post = {
   reading_time: number;
   category: number | Category | null;
   tags: PostTag[];
+  // Campos de edital (presentes apenas quando category = editais-resultados)
+  edital_org: string | null;
+  edital_vagas: number | null;
+  edital_cargos: string | null;
+  edital_salario: string | null;
+  edital_escolaridade: string | null;
+  edital_inscricoes: string | null;
+  edital_banca: string | null;
+  edital_link: string | null;
+};
+
+// Tipos com relações já populadas (shape real retornado pelas queries)
+export type PostSummary = {
+  id: number;
+  title: string;
+  slug: string;
+  excerpt: string | null;
+  published_date: string;
+  reading_time: number | null;
+  image: string | null;
+  featured: boolean;
+  category: Category | null;
+  tags: Array<{ id: number; posts_id: number; tags_id: Tag }>;
+};
+
+export type EditalFields = {
+  edital_org: string | null;
+  edital_vagas: number | null;
+  edital_cargos: string | null;
+  edital_salario: string | null;
+  edital_escolaridade: string | null;
+  edital_inscricoes: string | null;
+  edital_banca: string | null;
+  edital_link: string | null;
+};
+
+export type PostExpanded = PostSummary & EditalFields & {
+  content: string;
+  status: "published" | "draft";
+  author: Author | null;
 };
 
 type Schema = {
