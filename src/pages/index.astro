@@ -1,127 +1,116 @@
 ---
 import Layout from "../layouts/Layout.astro";
+import directus from "../lib/directus";
+import { readItems, readSingleton } from "@directus/sdk";
+import { formatDate, getCategory, assetUrl } from "../lib/utils";
 
-const hero = {
-  title: "STF abre concurso com 169 vagas e salários de até R$ 13,9 mil",
-  excerpt: "O Supremo Tribunal Federal publicou edital para Analista Judiciário e Técnico Judiciário. Inscrições até 15 de julho de 2025.",
-  slug: "stf-concurso-169-vagas",
-  category: { name: "Concursos Abertos", color: "#1d4ed8" },
-  date: "01 de junho de 2025",
-  readingTime: 4,
-  image: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=1400&h=700&fit=crop&q=85&auto=format",
-};
+const directusUrl = import.meta.env.PUBLIC_DIRECTUS_URL;
 
-const latestNews = [
-  {
-    title: "MPF divulga resultado final: 38 novos Procuradores da República",
-    slug: "mpf-resultado-procuradores",
-    category: { name: "Concursos Abertos", color: "#1d4ed8" },
-    date: "18 de maio de 2025",
-    readingTime: 3,
-    image: "https://picsum.photos/seed/courthouse-mpf/240/160",
-  },
-  {
-    title: "STJ decide: servidores comissionados precisam de dolo para responder por improbidade",
-    slug: "stj-servidores-improbidade",
-    category: { name: "Jurisprudência", color: "#d97706" },
-    date: "15 de maio de 2025",
-    readingTime: 5,
-    image: "https://picsum.photos/seed/gavel-stj/240/160",
-  },
-  {
-    title: "DPU lança concurso com 155 vagas para Defensor Público Federal",
-    slug: "dpu-concurso-defensor",
-    category: { name: "Concursos", color: "#1d4ed8" },
-    date: "10 de maio de 2025",
-    readingTime: 4,
-    image: "https://picsum.photos/seed/dpu-legal/240/160",
-  },
-];
+const POST_FIELDS = [
+  "id", "title", "slug", "excerpt", "published_date", "reading_time", "image", "featured",
+  { category: ["id", "name", "slug", "color"] },
+] as const;
 
-const highlights = [
-  {
-    title: "TJSP lança edital com 300 vagas para Escrevente Técnico Judiciário",
-    excerpt: "O Tribunal de Justiça de São Paulo publicou edital com remuneração inicial de R$ 6.043,54.",
-    slug: "tjsp-edital-300-vagas",
-    category: { name: "Concursos Estaduais", color: "#0891b2" },
-    date: "02 de junho de 2026",
-    readingTime: 4,
-    image: "https://picsum.photos/seed/tjsp-books/700/450",
-  },
-  {
-    title: "TRF da 1ª Região: resultado final do concurso para Analista Judiciário",
-    excerpt: "Confira a lista definitiva e a convocação para apresentação de documentos.",
-    slug: "trf-resultado-analista",
-    category: { name: "Editais e Resultados", color: "#16a34a" },
-    date: "02 de junho de 2026",
-    readingTime: 3,
-    image: "https://picsum.photos/seed/trf-building/700/450",
-  },
-  {
-    title: "Como dominar Direito Constitucional em concursos públicos",
-    excerpt: "Estratégias práticas para estudar menos e fixar mais com foco no que realmente cai.",
-    slug: "direito-constitucional-concursos",
-    category: { name: "Dicas de Estudo", color: "#ea580c" },
-    date: "01 de junho de 2026",
-    readingTime: 6,
-    image: "https://picsum.photos/seed/study-gavel/700/450",
-  },
-];
+const [global, featured, recent, categories] = await Promise.all([
+  directus.request(readSingleton("global")),
+  directus.request(readItems("posts", {
+    filter: { status: { _eq: "published" }, featured: { _eq: true } },
+    fields: POST_FIELDS as any,
+    sort: ["-published_date"],
+    limit: 1,
+  })),
+  directus.request(readItems("posts", {
+    filter: { status: { _eq: "published" } },
+    fields: POST_FIELDS as any,
+    sort: ["-published_date"],
+    limit: 8,
+  })),
+  directus.request(readItems("categories", {
+    fields: ["id", "name", "slug", "color", "description"],
+    sort: ["name"],
+  })),
+]);
 
-const categories = [
-  { name: "Concursos Abertos",   slug: "concursos-abertos",   desc: "Editais e inscrições",       color: "#3B82F6", icon: "briefcase" },
-  { name: "Concursos Estaduais", slug: "concursos-estaduais", desc: "Oportunidades por estado",   color: "#14B8A6", icon: "building"  },
-  { name: "Dicas de Estudo",     slug: "dicas-estudo",        desc: "Técnicas e materiais",       color: "#F97316", icon: "book"      },
-  { name: "Editais e Resultados",slug: "editais-resultados",  desc: "Publicações oficiais",       color: "#22C55E", icon: "document"  },
-  { name: "Jurisprudência",      slug: "jurisprudencia",      desc: "Decisões e entendimentos",   color: "#EF4444", icon: "scales"    },
-  { name: "Legislação",          slug: "legislacao",          desc: "Leis e normas",              color: "#1E293B", icon: "shield"    },
-  { name: "STF e Tribunais",     slug: "stf-tribunais",       desc: "Notícias e julgamentos",     color: "#8B5CF6", icon: "gavel"     },
-];
+const hero = featured[0] ?? recent[0];
+const heroCategory = getCategory(hero?.category);
+const heroImgSrc = assetUrl(hero?.image, directusUrl, "width=1400&height=700&fit=cover&quality=85");
+
+const restPosts = recent.filter(p => p.id !== hero?.id);
+const latestNews = restPosts.slice(0, 3);
+const highlights  = restPosts.slice(3, 6);
+
+// Mapeia slug de categoria para nome de ícone
+function categoryIcon(slug: string): string {
+  if (/estadual/.test(slug)) return "building";
+  if (/concurs/.test(slug))  return "briefcase";
+  if (/estudo|dica/.test(slug)) return "book";
+  if (/edital|result/.test(slug)) return "document";
+  if (/jurisprud/.test(slug)) return "scales";
+  if (/legisla/.test(slug))  return "shield";
+  if (/tribunal|stf/.test(slug)) return "gavel";
+  return "shield";
+}
 ---
 
-<Layout title="JusNews" description="Portal de referência em notícias, editais e conteúdo jurídico para concurseiros do Direito.">
+<Layout title={global.title} description={global.description ?? undefined}>
 
   <!-- Breaking news bar -->
-  <div class="bg-white border-b border-border">
-    <div class="max-w-7xl mx-auto px-6 py-2.5 flex items-center gap-3">
-      <span class="bg-gold text-white text-[10px] font-sans font-bold uppercase tracking-widest px-2.5 py-1 rounded flex-shrink-0">
-        Em Alta
-      </span>
-      <p class="text-ink/70 text-sm font-sans truncate flex-1">{hero.title}</p>
-      <a href="/blog" class="text-gold text-sm font-sans font-medium hover:text-navy transition-colors flex-shrink-0 hidden sm:flex items-center gap-1">
-        Ver todas as notícias <span>›</span>
-      </a>
+  {hero && (
+    <div class="bg-white border-b border-border">
+      <div class="max-w-7xl mx-auto px-6 py-2.5 flex items-center gap-3">
+        <span class="bg-gold text-white text-[10px] font-sans font-bold uppercase tracking-widest px-2.5 py-1 rounded flex-shrink-0">
+          Em Alta
+        </span>
+        <p class="text-ink/70 text-sm font-sans truncate flex-1">{hero.title}</p>
+        <a href="/blog" class="text-gold text-sm font-sans font-medium hover:text-navy transition-colors flex-shrink-0 hidden sm:flex items-center gap-1">
+          Ver todas as notícias <span>›</span>
+        </a>
+      </div>
     </div>
-  </div>
+  )}
 
   <!-- Hero + Últimas Notícias -->
   <section class="max-w-7xl mx-auto px-6 pt-7 pb-6">
     <div class="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6 items-stretch">
 
       <!-- Hero -->
-      <a href={`/blog/${hero.slug}`} class="group block relative rounded-xl overflow-hidden no-underline shadow-md">
-        <div class="relative h-[420px] md:h-[490px]">
-          <img src={hero.image} alt={hero.title} class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-          <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
-        </div>
-        <div class="absolute bottom-0 left-0 right-0 p-7">
-          <div class="flex items-center gap-3 mb-3">
-            <span class="bg-gold text-white text-[10px] font-sans font-bold uppercase tracking-widest px-2.5 py-1 rounded-sm">Destaque</span>
-            <span class="text-white/70 text-xs font-sans uppercase tracking-wider">{hero.category.name}</span>
+      {hero && (
+        <a href={`/blog/${hero.slug}`} class="group block relative rounded-xl overflow-hidden no-underline shadow-md">
+          <div class="relative h-[420px] md:h-[490px]">
+            {heroImgSrc ? (
+              <img src={heroImgSrc} alt={hero.title} class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+            ) : (
+              <div class="w-full h-full" style={`background: linear-gradient(135deg, ${heroCategory?.color ?? "#0f2340"} 0%, #0f2340 60%, #1a3560 100%)`}></div>
+            )}
+            <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
           </div>
-          <h1 class="font-display font-bold text-white text-2xl md:text-[2rem] leading-tight max-w-2xl mb-3 group-hover:text-gold-light transition-colors">
-            {hero.title}
-          </h1>
-          <p class="text-white/60 text-sm md:text-base max-w-xl line-clamp-2 mb-4 font-serif">{hero.excerpt}</p>
-          <div class="flex items-center gap-3 text-white/45 text-sm font-sans">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-            <span>{hero.date}</span>
-            <span>·</span>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            <span>{hero.readingTime} min de leitura</span>
+          <div class="absolute bottom-0 left-0 right-0 p-7">
+            <div class="flex items-center gap-3 mb-3">
+              <span class="bg-gold text-white text-[10px] font-sans font-bold uppercase tracking-widest px-2.5 py-1 rounded-sm">Destaque</span>
+              {heroCategory && (
+                <span class="text-white/70 text-xs font-sans uppercase tracking-wider">{heroCategory.name}</span>
+              )}
+            </div>
+            <h1 class="font-display font-bold text-white text-2xl md:text-[2rem] leading-tight max-w-2xl mb-3 group-hover:text-gold-light transition-colors">
+              {hero.title}
+            </h1>
+            {hero.excerpt && (
+              <p class="text-white/60 text-sm md:text-base max-w-xl line-clamp-2 mb-4 font-serif">{hero.excerpt}</p>
+            )}
+            <div class="flex items-center gap-3 text-white/45 text-sm font-sans">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              <span>{formatDate(hero.published_date)}</span>
+              {hero.reading_time && (
+                <>
+                  <span>·</span>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  <span>{hero.reading_time} min de leitura</span>
+                </>
+              )}
+            </div>
           </div>
-        </div>
-      </a>
+        </a>
+      )}
 
       <!-- Últimas Notícias sidebar -->
       <div class="bg-white border border-border rounded-xl shadow-sm flex flex-col h-full">
@@ -130,25 +119,32 @@ const categories = [
           <div class="h-0.5 w-10 bg-gold mt-1.5"></div>
         </div>
         <div class="flex flex-col divide-y divide-border flex-1">
-          {latestNews.map((post) => (
-            <a href={`/blog/${post.slug}`} class="group flex gap-3 no-underline px-5 py-4 hover:bg-gray-50 transition-colors flex-1">
-              <img
-                src={post.image}
-                alt={post.title}
-                class="w-[84px] h-[68px] object-cover rounded-md flex-shrink-0 self-start"
-                loading="lazy"
-              />
-              <div class="flex-1 min-w-0">
-                <span class="text-[10px] font-sans font-bold uppercase tracking-wider block mb-1" style={`color: ${post.category.color}`}>
-                  {post.category.name}
-                </span>
-                <h3 class="font-sans font-semibold text-[13px] text-ink leading-snug line-clamp-2 group-hover:text-navy transition-colors mb-1.5">
-                  {post.title}
-                </h3>
-                <div class="text-[11px] text-muted font-sans">{post.date} · {post.readingTime} min</div>
-              </div>
-            </a>
-          ))}
+          {latestNews.map((post) => {
+            const cat = getCategory(post.category);
+            const thumb = assetUrl(post.image, directusUrl, "width=200&height=140&fit=cover&quality=75");
+            return (
+              <a href={`/blog/${post.slug}`} class="group flex gap-3 no-underline px-5 py-4 hover:bg-gray-50 transition-colors flex-1">
+                {thumb ? (
+                  <img src={thumb} alt={post.title} class="w-[84px] h-[68px] object-cover rounded-md flex-shrink-0 self-start" loading="lazy" />
+                ) : (
+                  <div class="w-[84px] h-[68px] rounded-md flex-shrink-0 self-start" style={`background: ${cat?.color ?? "#0f2340"}22`}></div>
+                )}
+                <div class="flex-1 min-w-0">
+                  {cat && (
+                    <span class="text-[10px] font-sans font-bold uppercase tracking-wider block mb-1" style={`color: ${cat.color ?? "#1d4ed8"}`}>
+                      {cat.name}
+                    </span>
+                  )}
+                  <h3 class="font-sans font-semibold text-[13px] text-ink leading-snug line-clamp-2 group-hover:text-navy transition-colors mb-1.5">
+                    {post.title}
+                  </h3>
+                  <div class="text-[11px] text-muted font-sans">
+                    {formatDate(post.published_date)}{post.reading_time ? ` · ${post.reading_time} min` : ""}
+                  </div>
+                </div>
+              </a>
+            );
+          })}
         </div>
         <div class="px-5 py-4 border-t border-border flex-shrink-0">
           <a href="/blog" class="text-gold text-sm font-sans font-medium hover:text-navy transition-colors flex items-center gap-1">
@@ -161,108 +157,128 @@ const categories = [
   </section>
 
   <!-- Destaques do Dia -->
-  <section class="max-w-7xl mx-auto px-6 pb-14">
-    <div class="flex items-end justify-between mb-6">
-      <h2 class="font-display font-bold text-2xl text-ink">Destaques do Dia</h2>
-      <a href="/blog" class="text-gold text-sm font-sans font-medium hover:text-navy transition-colors flex items-center gap-1">
-        Ver todos os destaques <span>›</span>
-      </a>
-    </div>
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-      {highlights.map((post) => (
-        <a href={`/blog/${post.slug}`} class="group block bg-white rounded-xl overflow-hidden border border-border shadow-sm hover:shadow-md transition-all no-underline">
-          <div class="overflow-hidden">
-            <img src={post.image} alt={post.title} class="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
-          </div>
-          <div class="p-5">
-            <span
-              class="inline-block text-[10px] font-sans font-bold uppercase tracking-wider px-2.5 py-1 rounded-full mb-3"
-              style={`background: ${post.category.color}1a; color: ${post.category.color}`}
-            >
-              {post.category.name}
-            </span>
-            <h3 class="font-display font-bold text-[17px] text-ink leading-snug line-clamp-2 mb-2 group-hover:text-navy transition-colors">
-              {post.title}
-            </h3>
-            <p class="text-muted text-sm leading-relaxed line-clamp-2 mb-4">{post.excerpt}</p>
-            <div class="text-xs text-muted/70 font-sans border-t border-border pt-3">
-              {post.date} · {post.readingTime} min de leitura
-            </div>
-          </div>
+  {highlights.length > 0 && (
+    <section class="max-w-7xl mx-auto px-6 pb-14">
+      <div class="flex items-end justify-between mb-6">
+        <h2 class="font-display font-bold text-2xl text-ink">Destaques do Dia</h2>
+        <a href="/blog" class="text-gold text-sm font-sans font-medium hover:text-navy transition-colors flex items-center gap-1">
+          Ver todos os destaques <span>›</span>
         </a>
-      ))}
-    </div>
-  </section>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {highlights.map((post) => {
+          const cat = getCategory(post.category);
+          const imgSrc = assetUrl(post.image, directusUrl, "width=700&height=450&fit=cover&quality=80");
+          return (
+            <a href={`/blog/${post.slug}`} class="group block bg-white rounded-xl overflow-hidden border border-border shadow-sm hover:shadow-md transition-all no-underline">
+              <div class="overflow-hidden h-48">
+                {imgSrc ? (
+                  <img src={imgSrc} alt={post.title} class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
+                ) : (
+                  <div class="w-full h-full" style={`background: linear-gradient(135deg, ${cat?.color ?? "#0f2340"}22 0%, ${cat?.color ?? "#0f2340"}44 100%)`}></div>
+                )}
+              </div>
+              <div class="p-5">
+                {cat && (
+                  <span
+                    class="inline-block text-[10px] font-sans font-bold uppercase tracking-wider px-2.5 py-1 rounded-full mb-3"
+                    style={`background: ${cat.color ?? "#0f2340"}1a; color: ${cat.color ?? "#0f2340"}`}
+                  >
+                    {cat.name}
+                  </span>
+                )}
+                <h3 class="font-display font-bold text-[17px] text-ink leading-snug line-clamp-2 mb-2 group-hover:text-navy transition-colors">
+                  {post.title}
+                </h3>
+                {post.excerpt && (
+                  <p class="text-muted text-sm leading-relaxed line-clamp-2 mb-4">{post.excerpt}</p>
+                )}
+                <div class="text-xs text-muted/70 font-sans border-t border-border pt-3">
+                  {formatDate(post.published_date)}{post.reading_time ? ` · ${post.reading_time} min de leitura` : ""}
+                </div>
+              </div>
+            </a>
+          );
+        })}
+      </div>
+    </section>
+  )}
 
   <!-- Explore por Área -->
-  <section class="bg-white border-y border-border py-12">
-    <div class="max-w-7xl mx-auto px-6">
-      <div class="text-center mb-8">
-        <h2 class="font-display font-bold text-2xl text-ink">Explore por Área</h2>
-        <p class="text-muted font-sans text-sm mt-1.5">Navegue pelas principais categorias do portal</p>
+  {categories.length > 0 && (
+    <section class="bg-white border-y border-border py-12">
+      <div class="max-w-7xl mx-auto px-6">
+        <div class="text-center mb-8">
+          <h2 class="font-display font-bold text-2xl text-ink">Explore por Área</h2>
+          <p class="text-muted font-sans text-sm mt-1.5">Navegue pelas principais categorias do portal</p>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+          {categories.map((cat) => {
+            const icon = categoryIcon(cat.slug);
+            return (
+              <a
+                href={`/categoria/${cat.slug}`}
+                class="flex flex-col items-center gap-2.5 p-4 rounded-xl border border-border bg-paper hover:bg-white hover:shadow-sm transition-all no-underline text-center group"
+              >
+                <span
+                  class="w-12 h-12 rounded-full flex items-center justify-center text-white flex-shrink-0 group-hover:scale-110 transition-transform"
+                  style={`background: ${cat.color ?? "#0f2340"}`}
+                >
+                  {icon === "briefcase" && (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M10 2C8.9 2 8 2.9 8 4H4C2.9 4 2 4.9 2 6V18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V6C22 4.9 21.1 4 20 4H16C16 2.9 15.1 2 14 2H10M10 4H14V6H10V4Z"/>
+                    </svg>
+                  )}
+                  {icon === "building" && (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M4 10v7h3v-7H4zm6 0v7h3v-7h-3zM2 22h19v-3H2v3zm14-12v7h3v-7h-3zM11.5 1L2 6v2h19V6z"/>
+                    </svg>
+                  )}
+                  {icon === "book" && (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z"/>
+                    </svg>
+                  )}
+                  {icon === "document" && (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+                    </svg>
+                  )}
+                  {icon === "scales" && (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M17 8C8 10 5.9 16.17 3.82 22H5.71C6.66 19.91 7 19 8 17c1-1 3-2 4-2-1 1.17-1 2.13-1 3.08C10.68 17.18 10 16 9 15.53 9 17.24 9.77 18.9 11 20.07V22h2v-1.94C14.23 18.9 15 17.24 15 15.53 14 16 13.32 17.18 13 18.08 13 17.13 13 16.17 12 15c1 0 3 1 4 2 1 2 1.34 2.91 2.29 5H20.18C18.1 16.17 16 10 17 8zM12 3C10.35 3 9 4.35 9 6s1.35 3 3 3 3-1.35 3-3-1.35-3-3-3z"/>
+                    </svg>
+                  )}
+                  {(icon === "shield" || (icon !== "briefcase" && icon !== "building" && icon !== "book" && icon !== "document" && icon !== "scales" && icon !== "gavel")) && (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
+                    </svg>
+                  )}
+                  {icon === "gavel" && (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M1 21h12v2H1v-2zm5.5-4h-2v4h2v-4zm5-2h-2v6h2v-6zm5-2h-2v8h2v-8zM10.07 13.27c.47-.07.98-.27 1.43-.27.43 0 .6.09.6.47 0 .37-.87.69-1.2.87L2 18l.7 1.75 8.9-3.89c.87-.38 1.4-1.17 1.4-2.13 0-1.5-1.2-2.23-2.63-2.23-.87 0-1.67.27-2.44.55L2 14.5l.7 1.75 7.37-2.98z"/>
+                    </svg>
+                  )}
+                </span>
+                <div>
+                  <span class="text-xs font-sans font-semibold text-ink leading-snug block">{cat.name}</span>
+                  {cat.description && (
+                    <span class="text-[11px] font-sans text-muted mt-0.5 block line-clamp-1">{cat.description}</span>
+                  )}
+                </div>
+              </a>
+            );
+          })}
+        </div>
       </div>
-      <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
-        {categories.map((cat) => (
-          <a
-            href={`/categoria/${cat.slug}`}
-            class="flex flex-col items-center gap-2.5 p-4 rounded-xl border border-border bg-paper hover:bg-white hover:shadow-sm transition-all no-underline text-center group"
-          >
-            <span
-              class="w-12 h-12 rounded-full flex items-center justify-center text-white flex-shrink-0 group-hover:scale-110 transition-transform"
-              style={`background: ${cat.color}`}
-            >
-              {cat.icon === "briefcase" && (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M10 2C8.9 2 8 2.9 8 4H4C2.9 4 2 4.9 2 6V18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V6C22 4.9 21.1 4 20 4H16C16 2.9 15.1 2 14 2H10M10 4H14V6H10V4Z"/>
-                </svg>
-              )}
-              {cat.icon === "building" && (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M4 10v7h3v-7H4zm6 0v7h3v-7h-3zM2 22h19v-3H2v3zm14-12v7h3v-7h-3zM11.5 1L2 6v2h19V6z"/>
-                </svg>
-              )}
-              {cat.icon === "book" && (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z"/>
-                </svg>
-              )}
-              {cat.icon === "document" && (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
-                </svg>
-              )}
-              {cat.icon === "scales" && (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M17 8C8 10 5.9 16.17 3.82 22H5.71C6.66 19.91 7 19 8 17c1-1 3-2 4-2-1 1.17-1 2.13-1 3.08C10.68 17.18 10 16 9 15.53 9 17.24 9.77 18.9 11 20.07V22h2v-1.94C14.23 18.9 15 17.24 15 15.53 14 16 13.32 17.18 13 18.08 13 17.13 13 16.17 12 15c1 0 3 1 4 2 1 2 1.34 2.91 2.29 5H20.18C18.1 16.17 16 10 17 8zM12 3C10.35 3 9 4.35 9 6s1.35 3 3 3 3-1.35 3-3-1.35-3-3-3z"/>
-                </svg>
-              )}
-              {cat.icon === "shield" && (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
-                </svg>
-              )}
-              {cat.icon === "gavel" && (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M1 21h12v2H1v-2zm5.5-4h-2v4h2v-4zm5-2h-2v6h2v-6zm5-2h-2v8h2v-8zM10.07 13.27c.47-.07.98-.27 1.43-.27.43 0 .6.09.6.47 0 .37-.87.69-1.2.87L2 18l.7 1.75 8.9-3.89c.87-.38 1.4-1.17 1.4-2.13 0-1.5-1.2-2.23-2.63-2.23-.87 0-1.67.27-2.44.55L2 14.5l.7 1.75 7.37-2.98z"/>
-                </svg>
-              )}
-            </span>
-            <div>
-              <span class="text-xs font-sans font-semibold text-ink leading-snug block">{cat.name}</span>
-              <span class="text-[11px] font-sans text-muted mt-0.5 block">{cat.desc}</span>
-            </div>
-          </a>
-        ))}
-      </div>
-    </div>
-  </section>
+    </section>
+  )}
 
   <!-- Newsletter -->
   <section class="bg-navy py-14">
     <div class="max-w-7xl mx-auto px-6">
       <div class="flex flex-col md:flex-row items-center gap-10 md:gap-14">
 
-        <!-- Icon + text -->
         <div class="flex items-start gap-5 flex-shrink-0 max-w-sm">
           <div class="w-14 h-14 rounded-full border-2 border-gold/40 flex items-center justify-center flex-shrink-0 mt-1">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#c8960c" stroke-width="1.8">
@@ -280,7 +296,6 @@ const categories = [
           </div>
         </div>
 
-        <!-- Form -->
         <div class="flex-1 w-full max-w-md">
           <form class="flex gap-2 mb-2" onsubmit="return false;">
             <div class="relative flex-1">
@@ -288,50 +303,32 @@ const categories = [
                 <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
                 <polyline points="22,6 12,13 2,6"/>
               </svg>
-              <input
-                type="email"
-                placeholder="Seu melhor e-mail"
-                class="w-full pl-9 pr-4 py-2.5 bg-white text-ink text-sm rounded-md border border-transparent outline-none focus:ring-2 focus:ring-gold/40"
-              />
+              <input type="email" placeholder="Seu melhor e-mail" class="w-full pl-9 pr-4 py-2.5 bg-white text-ink text-sm rounded-md border border-transparent outline-none focus:ring-2 focus:ring-gold/40" />
             </div>
-            <button
-              type="submit"
-              class="bg-gold hover:bg-amber-600 text-white text-sm font-sans font-semibold px-5 py-2.5 rounded-md transition-colors whitespace-nowrap"
-            >
+            <button type="submit" class="bg-gold hover:bg-amber-600 text-white text-sm font-sans font-semibold px-5 py-2.5 rounded-md transition-colors whitespace-nowrap">
               Quero receber
             </button>
           </form>
           <div class="flex items-center gap-1.5 text-white/30 text-xs font-sans">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
-            </svg>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>
             <span>Seu e-mail está seguro conosco. Sem spam.</span>
           </div>
         </div>
 
-        <!-- Scales illustration -->
         <div class="hidden lg:flex flex-shrink-0">
           <svg width="110" height="110" viewBox="0 0 110 110" fill="none" xmlns="http://www.w3.org/2000/svg">
             <circle cx="55" cy="55" r="52" fill="#c8960c" fill-opacity="0.07" stroke="#c8960c" stroke-opacity="0.18" stroke-width="1.5"/>
-            <!-- Pillar -->
             <rect x="53" y="18" width="4" height="58" rx="2" fill="#c8960c" fill-opacity="0.75"/>
-            <!-- Base -->
             <rect x="37" y="74" width="36" height="5" rx="2.5" fill="#c8960c" fill-opacity="0.75"/>
             <rect x="46" y="70" width="18" height="5" rx="2.5" fill="#c8960c" fill-opacity="0.55"/>
-            <!-- Top knob -->
             <circle cx="55" cy="18" r="4" fill="#c8960c"/>
-            <!-- Horizontal bar -->
             <rect x="15" y="30" width="80" height="4" rx="2" fill="#c8960c"/>
-            <!-- Left chains -->
             <line x1="24" y1="34" x2="21" y2="56" stroke="#c8960c" stroke-width="1.5" stroke-opacity="0.65"/>
             <line x1="30" y1="34" x2="33" y2="56" stroke="#c8960c" stroke-width="1.5" stroke-opacity="0.65"/>
-            <!-- Right chains -->
             <line x1="80" y1="34" x2="77" y2="56" stroke="#c8960c" stroke-width="1.5" stroke-opacity="0.65"/>
             <line x1="86" y1="34" x2="89" y2="56" stroke="#c8960c" stroke-width="1.5" stroke-opacity="0.65"/>
-            <!-- Left bowl -->
             <path d="M14 56 Q27 68 40 56" stroke="#c8960c" stroke-width="2.5" fill="none"/>
             <ellipse cx="27" cy="57" rx="12" ry="2.5" fill="#c8960c" fill-opacity="0.12"/>
-            <!-- Right bowl -->
             <path d="M70 56 Q83 68 96 56" stroke="#c8960c" stroke-width="2.5" fill="none"/>
             <ellipse cx="83" cy="57" rx="12" ry="2.5" fill="#c8960c" fill-opacity="0.12"/>
           </svg>
