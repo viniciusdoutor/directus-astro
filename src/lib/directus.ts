@@ -94,6 +94,28 @@ export type PostExpanded = PostSummary & EditalFields & {
   author: Author | null;
 };
 
+export type Curso = {
+  id: number;
+  status: "published" | "draft";
+  title: string;
+  slug: string;
+  color: string | null;
+  icon: string | null;
+  excerpt: string | null;
+  description: string | null;
+  image: string | null;
+  featured: boolean;
+  career: string | null;
+  institution: string | null;
+  level: string | null;
+  duration_months: number | null;
+  price: string | null;
+  cta_url: string | null;
+  highlights: string[] | null;
+  modules: string[] | null;
+  sort: number | null;
+};
+
 type Schema = {
   posts: Post[];
   global: Global;
@@ -101,6 +123,7 @@ type Schema = {
   categories: Category[];
   tags: Tag[];
   posts_tags: PostTag[];
+  cursos: Curso[];
 };
 
 const directus = createDirectus<Schema>(import.meta.env.PUBLIC_DIRECTUS_URL).with(rest());

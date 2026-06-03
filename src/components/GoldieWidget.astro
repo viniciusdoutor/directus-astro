@@ -1,0 +1,53 @@
+---
+import goldieChat from "../assets/goldie/goldie_chat1.png";
+---
+
+<div class="rounded-xl overflow-hidden" style="background: linear-gradient(145deg, #0f2340 0%, #1a3a6b 100%)">
+  <div class="h-0.5 w-full" style="background: linear-gradient(90deg, #c8960c, #f5e6a8, #c8960c)"></div>
+
+  <div class="flex items-end gap-0">
+    <div class="w-28 flex-shrink-0 self-end">
+      <img
+        src={goldieChat.src}
+        alt="Goldie — IA do Portal Golden Jus"
+        class="w-full object-contain object-bottom"
+        style="max-height: 148px;"
+        loading="lazy"
+      />
+    </div>
+    <div class="flex-1 py-5 pr-5 pl-2">
+      <div class="flex items-center gap-1.5 mb-2">
+        <span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400" style="animation: pulse 2s infinite"></span>
+        <span class="text-emerald-400 text-[10px] font-sans font-semibold uppercase tracking-widest">Online agora</span>
+      </div>
+      <h3 class="font-display font-bold text-white text-[15px] leading-snug mb-1.5">
+        Sou o Goldie, sua IA jurídica
+      </h3>
+      <p class="text-white/50 text-xs leading-relaxed font-sans">
+        Tire dúvidas, faça simulados e acelere sua aprovação.
+      </p>
+    </div>
+  </div>
+
+  <div class="px-5 pb-5">
+    <a
+      href="#"
+      class="flex items-center justify-center gap-2 w-full py-2.5 text-navy text-xs font-sans font-bold rounded-lg transition-colors"
+      style="background: #c8960c"
+      onmouseover="this.style.background='#b07d0a'"
+      onmouseout="this.style.background='#c8960c'"
+    >
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+      </svg>
+      Conversar com o Goldie
+    </a>
+  </div>
+</div>
+
+<style>
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+</style>

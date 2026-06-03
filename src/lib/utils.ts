@@ -20,7 +20,7 @@ export function authorName(raw: unknown): string | null {
 export function categoryIcon(slug: string): string {
   if (/estadual/.test(slug))      return "building";
   if (/concurs/.test(slug))       return "briefcase";
-  if (/estudo|dica/.test(slug))   return "book";
+  if (/estudo|dica|cogni|aprendiz/.test(slug)) return "book";
   if (/edital|result/.test(slug)) return "document";
   if (/jurisprud/.test(slug))     return "scales";
   if (/legisla/.test(slug))       return "shield";

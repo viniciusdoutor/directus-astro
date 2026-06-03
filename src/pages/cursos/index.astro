@@ -1,0 +1,170 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import { fetchCursos, fetchGlobal } from "../../lib/queries";
+import { assetUrl } from "../../lib/utils";
+
+const [global, cursos] = await Promise.all([fetchGlobal(), fetchCursos()]);
+const directusUrl = import.meta.env.PUBLIC_DIRECTUS_URL;
+
+const accentMap: Record<string, string> = {
+  "juiz-federal":           "#1d4ed8",
+  "juiz-estadual":          "#15803d",
+  "promotor-de-justica":    "#9f1239",
+  "procurador-da-republica":"#c8960c",
+  "delegado":               "#6b21a8",
+};
+
+function iconSvg(icon: string | null, color: string) {
+  switch (icon) {
+    case "courthouse":
+      return `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 22V9l9-7 9 7v13"/><path d="M9 22V12h6v10"/><path d="M3 9h18"/></svg>`;
+    case "shield":
+      return `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>`;
+    case "torch":
+      return `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v6M9.5 4.5l5 1M8 8c0 2.2 1.8 4 4 4s4-1.8 4-4"/><path d="M12 12v10M9 22h6"/></svg>`;
+    case "republic":
+      return `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>`;
+    case "badge":
+    default:
+      return `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/><path d="M9 12l2 2 4-4"/></svg>`;
+  }
+}
+---
+
+<Layout title={`Cursos Preparatórios — ${global.title}`} description="Preparatórios de alto desempenho para as principais carreiras jurídicas. Metodologia personalizada com tecnologia de ponta.">
+
+  <!-- Hero -->
+  <div class="bg-[#0f2340] relative overflow-hidden">
+    <div class="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none select-none font-display font-bold text-white/[0.04] text-[18rem] leading-none tracking-tighter pr-4 hidden lg:block">GJ</div>
+    <div class="max-w-7xl mx-auto px-6 py-16 relative z-10">
+      <nav class="flex items-center gap-1.5 text-xs font-sans text-white/40 mb-8">
+        <a href="/" class="hover:text-gold transition-colors">Início</a>
+        <span>›</span>
+        <span class="text-white/60">Cursos</span>
+      </nav>
+      <div class="flex items-center gap-3 mb-4">
+        <div class="h-px w-8 bg-gold"></div>
+        <span class="text-gold text-[10px] font-sans font-bold uppercase tracking-[0.2em]">Preparatórios Golden Jus</span>
+      </div>
+      <h1 class="font-display font-bold text-white text-4xl md:text-5xl leading-tight mb-4">
+        Conheça nossos <span class="text-gold">cursos</span>
+      </h1>
+      <p class="text-white/55 font-serif text-lg leading-relaxed max-w-2xl">
+        Preparatórios de alto desempenho para as principais carreiras jurídicas. Metodologia personalizada com inteligência artificial para acelerar sua aprovação.
+      </p>
+    </div>
+  </div>
+
+  <!-- Grid de cursos -->
+  <div class="bg-paper">
+    <div class="max-w-7xl mx-auto px-6 py-16">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7">
+        {cursos.map((curso) => {
+          const color = curso.color ?? accentMap[curso.slug] ?? "#0f2340";
+          const imgSrc = assetUrl(curso.image, directusUrl, "width=700&height=400&fit=cover&quality=80");
+          const isFeatured = curso.featured;
+          return (
+            <a
+              href={`/cursos/${curso.slug}`}
+              class={`group relative bg-white rounded-2xl overflow-hidden border shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 no-underline flex flex-col ${isFeatured ? "border-gold/50 md:col-span-2 lg:col-span-1" : "border-border"}`}
+            >
+              {isFeatured && (
+                <div class="absolute top-4 right-4 z-10">
+                  <span class="bg-gold text-white text-[9px] font-sans font-bold uppercase tracking-widest px-2.5 py-1 rounded-full shadow-sm">Mais popular</span>
+                </div>
+              )}
+              <div class="h-1.5" style={`background: ${color}`}></div>
+              <div class="p-7 flex flex-col flex-1">
+                <div
+                  class="w-14 h-14 rounded-full flex items-center justify-center mb-5 group-hover:scale-110 transition-transform"
+                  style={`background: ${color}18`}
+                  set:html={iconSvg(curso.icon, color)}
+                />
+                <div class="h-px w-8 mb-4" style={`background: #c8960c`}></div>
+                <div class="flex items-center gap-2 mb-2 flex-wrap">
+                  {curso.institution && (
+                    <span class="text-[10px] font-sans font-bold px-2 py-0.5 rounded-full" style={`background:${color}18; color:${color}`}>
+                      {curso.institution}
+                    </span>
+                  )}
+                  {curso.level && (
+                    <span class="text-[10px] font-sans font-bold px-2 py-0.5 rounded-full" style={`background:${color}18; color:${color}`}>
+                      {curso.level}
+                    </span>
+                  )}
+                </div>
+                <h2 class="font-display font-bold text-ink text-xl leading-snug mb-2 group-hover:text-navy transition-colors">
+                  {curso.title}
+                </h2>
+                {curso.excerpt && (
+                  <p class="text-muted text-sm font-sans leading-relaxed line-clamp-2 flex-1 mb-5">
+                    {curso.excerpt}
+                  </p>
+                )}
+                <div class="mt-auto flex items-center justify-between pt-4 border-t border-border">
+                  {curso.price ? (
+                    <div>
+                      <div class="text-[10px] font-sans text-muted uppercase tracking-wide">A partir de</div>
+                      <div class="font-display font-bold text-ink text-base">{curso.price}</div>
+                    </div>
+                  ) : <div />}
+                  <span
+                    class="text-xs font-sans font-bold px-4 py-2 rounded-lg transition-colors"
+                    style={`background:${color}; color: white`}
+                  >
+                    Ver curso
+                  </span>
+                </div>
+              </div>
+            </a>
+          );
+        })}
+      </div>
+    </div>
+  </div>
+
+  <!-- Barra de diferenciais -->
+  <div class="bg-white border-t border-border py-10">
+    <div class="max-w-7xl mx-auto px-6">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-6 divide-y md:divide-y-0 md:divide-x divide-border">
+        <div class="flex items-start gap-3 pt-6 md:pt-0 first:pt-0 md:pr-6">
+          <div class="w-9 h-9 rounded-full bg-gold/10 flex items-center justify-center flex-shrink-0">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c8960c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          </div>
+          <div>
+            <div class="font-display font-bold text-ink text-sm">92% de aprovação</div>
+            <div class="text-muted text-xs font-sans mt-0.5">Alunos aprovados em até 2 anos</div>
+          </div>
+        </div>
+        <div class="flex items-start gap-3 pt-6 md:pt-0 md:px-6">
+          <div class="w-9 h-9 rounded-full bg-gold/10 flex items-center justify-center flex-shrink-0">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c8960c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          </div>
+          <div>
+            <div class="font-display font-bold text-ink text-sm">50.000+ questões</div>
+            <div class="text-muted text-xs font-sans mt-0.5">Banco atualizado com gabarito</div>
+          </div>
+        </div>
+        <div class="flex items-start gap-3 pt-6 md:pt-0 md:px-6">
+          <div class="w-9 h-9 rounded-full bg-gold/10 flex items-center justify-center flex-shrink-0">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c8960c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <div>
+            <div class="font-display font-bold text-ink text-sm">Acesso vitalício</div>
+            <div class="text-muted text-xs font-sans mt-0.5">Conteúdo atualizado sempre</div>
+          </div>
+        </div>
+        <div class="flex items-start gap-3 pt-6 md:pt-0 md:pl-6">
+          <div class="w-9 h-9 rounded-full bg-gold/10 flex items-center justify-center flex-shrink-0">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c8960c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <div>
+            <div class="font-display font-bold text-ink text-sm">Mentoria ao vivo</div>
+            <div class="text-muted text-xs font-sans mt-0.5">Aulas semanais com especialistas</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</Layout>

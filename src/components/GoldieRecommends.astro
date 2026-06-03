@@ -1,0 +1,92 @@
+---
+import goldieJoinha from "../assets/goldie/joinha.png";
+import { fetchPosts } from "../lib/queries";
+import type { PostSummary } from "../lib/directus";
+
+let livePosts: PostSummary[] = [];
+try {
+  livePosts = await fetchPosts({ limit: 3 });
+} catch {}
+
+type SeedPost = {
+  title: string;
+  slug: string;
+  reading_time: number;
+  category: { name: string; color: string; slug: string } | null;
+};
+
+const SEED: SeedPost[] = [
+  {
+    title: "Como montar um plano de estudos para concursos jurídicos em 90 dias",
+    slug: "plano-estudos-concursos-juridicos-90-dias",
+    reading_time: 7,
+    category: { name: "Cognição e Aprendizado", color: "#1d4ed8", slug: "cognicao-aprendizado" },
+  },
+  {
+    title: "Súmulas do STF: as 30 mais cobradas em provas de 2025",
+    slug: "sumulas-stf-mais-cobradas-2025",
+    reading_time: 10,
+    category: { name: "Jurisprudência", color: "#7c3aed", slug: "jurisprudencia" },
+  },
+  {
+    title: "Lei de Improbidade 14.230/2021: pontos essenciais para a prova",
+    slug: "lei-improbidade-administrativa-14230-2021",
+    reading_time: 8,
+    category: { name: "Legislação", color: "#047857", slug: "legislacao" },
+  },
+];
+
+const displayPosts = livePosts.length >= 3 ? livePosts.slice(0, 3) : SEED;
+---
+
+<div class="bg-white border border-border rounded-xl overflow-hidden shadow-sm">
+  <div class="px-5 py-3.5 flex items-center gap-3" style="background: linear-gradient(90deg, #0f2340 0%, #1a3a6b 100%)">
+    <div class="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 border-2 border-gold/50 bg-navy-light">
+      <img
+        src={goldieJoinha.src}
+        alt="Goldie"
+        class="w-full h-full object-cover object-top"
+        loading="lazy"
+      />
+    </div>
+    <div>
+      <h3 class="font-sans font-bold text-white text-sm leading-tight">Goldie Recomenda</h3>
+      <p class="text-white/45 text-[11px] font-sans">Selecionado para você hoje</p>
+    </div>
+  </div>
+
+  <div class="divide-y divide-border">
+    {displayPosts.map((post, i) => {
+      const cat = (post as any).category as SeedPost["category"];
+      return (
+        <a
+          href={`/blog/${post.slug}`}
+          class="flex items-start gap-3 px-4 py-3.5 hover:bg-paper/60 transition-colors group no-underline"
+        >
+          <span
+            class="flex-shrink-0 w-5 h-5 rounded-full text-[10px] font-sans font-bold flex items-center justify-center mt-0.5"
+            style="background: #c8960c22; color: #c8960c"
+          >
+            {i + 1}
+          </span>
+          <div class="flex-1 min-w-0">
+            {cat && (
+              <span
+                class="text-[10px] font-sans font-bold uppercase tracking-wider block mb-0.5"
+                style={`color: ${cat.color ?? "#1d4ed8"}`}
+              >
+                {cat.name}
+              </span>
+            )}
+            <p class="text-[13px] font-sans font-semibold text-ink leading-snug line-clamp-2 group-hover:text-navy transition-colors">
+              {post.title}
+            </p>
+            {post.reading_time && (
+              <p class="text-[11px] text-muted font-sans mt-1">{post.reading_time} min de leitura</p>
+            )}
+          </div>
+        </a>
+      );
+    })}
+  </div>
+</div>

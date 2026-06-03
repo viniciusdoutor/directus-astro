@@ -4,6 +4,7 @@ import PostCard from "../../components/PostCard.astro";
 import CategoryBadge from "../../components/CategoryBadge.astro";
 import TagPill from "../../components/TagPill.astro";
 import CoverImage from "../../components/CoverImage.astro";
+import GoldieBannerEstudo from "../../components/GoldieBannerEstudo.astro";
 import {
   fetchAllPostsExpanded,
   fetchRecentPosts,
@@ -38,6 +39,7 @@ const isEdital = category?.slug === "editais-resultados";
 const hasEdital = isEdital && !!(
   post.edital_org || post.edital_vagas || post.edital_cargos || post.edital_salario
 );
+const isStudy = /estudo|dica|prepara|cogni|aprendiz/i.test(category?.slug ?? "");
 
 const [recentPosts, related] = await Promise.all([
   fetchRecentPosts(3, post.slug),
@@ -159,6 +161,9 @@ const pageHref = encodeURIComponent(pageUrl);
           prose-table:text-sm prose-thead:bg-paper prose-th:font-sans prose-th:font-semibold prose-th:text-ink prose-th:py-2 prose-td:py-2 prose-td:border-border">
           <Fragment set:html={post.content} />
         </div>
+
+        <!-- Banner Goldie — categorias de estudo/preparação -->
+        {isStudy && <GoldieBannerEstudo />}
 
         <!-- Tags -->
         {tags.length > 0 && (

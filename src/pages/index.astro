@@ -3,6 +3,31 @@ import Layout from "../layouts/Layout.astro";
 import { fetchFeaturedPost, fetchPosts, fetchCategories, fetchGlobal } from "../lib/queries";
 import { formatDate, assetUrl, categoryIcon } from "../lib/utils";
 import CoverImage from "../components/CoverImage.astro";
+import cargo1 from "../assets/cargos/1.png";
+import cargo2 from "../assets/cargos/2.png";
+import cargo3 from "../assets/cargos/3.png";
+import cargo4 from "../assets/cargos/4.png";
+import cargo5 from "../assets/cargos/5.png";
+import cargo6 from "../assets/cargos/6.png";
+import cargo7 from "../assets/cargos/7.png";
+import concurseiroPersistente from "../assets/conquistas/Concurseiro Persistente.png";
+import membroPreparado       from "../assets/conquistas/Membro Preparado.png";
+import estudanteDedicado     from "../assets/conquistas/Estudante Dedicado.png";
+import medalha100            from "../assets/conquistas/Medalha 100.png";
+import jurista               from "../assets/conquistas/Jurista.png";
+import mestreLeis            from "../assets/conquistas/Mestre das Leis.png";
+import revisorExpert         from "../assets/conquistas/Revisor Expert.png";
+
+const AREA_ICONS: Record<string, string> = {
+  "concursos-abertos":   concurseiroPersistente.src,
+  "concursos-estaduais": membroPreparado.src,
+  "cognicao-aprendizado": estudanteDedicado.src,
+  "editais-resultados":  medalha100.src,
+  "jurisprudencia":      jurista.src,
+  "legislacao":          mestreLeis.src,
+  "stf-tribunais":       revisorExpert.src,
+};
+const getAreaIcon = (slug: string) => AREA_ICONS[slug] ?? concurseiroPersistente.src;
 
 const directusUrl = import.meta.env.PUBLIC_DIRECTUS_URL;
 
@@ -209,23 +234,21 @@ const highlights  = restPosts.slice(3, 6);
         </div>
         <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
           {categories.map((cat) => {
-            const icon = categoryIcon(cat.slug);
             return (
               <a
                 href={`/categoria/${cat.slug}`}
                 class="flex flex-col items-center gap-2.5 p-4 rounded-xl border border-border bg-paper hover:bg-white hover:shadow-sm transition-all no-underline text-center group"
               >
                 <span
-                  class="w-12 h-12 rounded-full flex items-center justify-center text-white flex-shrink-0 group-hover:scale-110 transition-transform"
+                  class="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform overflow-hidden p-1.5"
                   style={`background: ${cat.color ?? "#0f2340"}`}
                 >
-                  {icon === "briefcase" && <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M10 2C8.9 2 8 2.9 8 4H4C2.9 4 2 4.9 2 6V18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V6C22 4.9 21.1 4 20 4H16C16 2.9 15.1 2 14 2H10M10 4H14V6H10V4Z"/></svg>}
-                  {icon === "building" && <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M4 10v7h3v-7H4zm6 0v7h3v-7h-3zM2 22h19v-3H2v3zm14-12v7h3v-7h-3zM11.5 1L2 6v2h19V6z"/></svg>}
-                  {icon === "book" && <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z"/></svg>}
-                  {icon === "document" && <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>}
-                  {icon === "scales" && <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17 8C8 10 5.9 16.17 3.82 22H5.71C6.66 19.91 7 19 8 17c1-1 3-2 4-2-1 1.17-1 2.13-1 3.08C10.68 17.18 10 16 9 15.53 9 17.24 9.77 18.9 11 20.07V22h2v-1.94C14.23 18.9 15 17.24 15 15.53 14 16 13.32 17.18 13 18.08 13 17.13 13 16.17 12 15c1 0 3 1 4 2 1 2 1.34 2.91 2.29 5H20.18C18.1 16.17 16 10 17 8zM12 3C10.35 3 9 4.35 9 6s1.35 3 3 3 3-1.35 3-3-1.35-3-3-3z"/></svg>}
-                  {icon === "gavel" && <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M1 21h12v2H1v-2zm5.5-4h-2v4h2v-4zm5-2h-2v6h2v-6zm5-2h-2v8h2v-8zM10.07 13.27c.47-.07.98-.27 1.43-.27.43 0 .6.09.6.47 0 .37-.87.69-1.2.87L2 18l.7 1.75 8.9-3.89c.87-.38 1.4-1.17 1.4-2.13 0-1.5-1.2-2.23-2.63-2.23-.87 0-1.67.27-2.44.55L2 14.5l.7 1.75 7.37-2.98z"/></svg>}
-                  {icon === "shield" && <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>}
+                  <img
+                    src={getAreaIcon(cat.slug)}
+                    alt={cat.name}
+                    class="w-full h-full object-contain"
+                    loading="lazy"
+                  />
                 </span>
                 <div>
                   <span class="text-xs font-sans font-semibold text-ink leading-snug block">{cat.name}</span>
@@ -240,5 +263,219 @@ const highlights  = restPosts.slice(3, 6);
       </div>
     </section>
   )}
+
+  <!-- Conheça nossos cursos -->
+  <section class="relative overflow-hidden">
+
+    <!-- Topo navy: cabeçalho + chips -->
+    <div class="bg-[#0f2340] relative overflow-hidden pt-16 pb-32">
+
+      <!-- Monograma "GJ" decorativo -->
+      <div class="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none select-none leading-none font-display font-bold text-white/[0.04] text-[22rem] tracking-tighter pr-4 hidden lg:block">GJ</div>
+
+      <div class="max-w-7xl mx-auto px-6 relative z-10">
+
+        <!-- Label + título -->
+        <div class="mb-10">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="h-px w-8 bg-gold flex-shrink-0"></div>
+            <span class="text-gold text-[10px] font-sans font-bold uppercase tracking-[0.2em]">Preparatórios Golden Jus</span>
+          </div>
+          <h2 class="font-display font-bold text-white text-3xl md:text-4xl leading-tight max-w-xl mb-4">
+            Conheça nossos <span class="text-gold">cursos</span>
+          </h2>
+          <p class="text-white/55 font-serif text-base leading-relaxed max-w-2xl">
+            Preparatórios de alto desempenho para as principais carreiras jurídicas. Metodologia personalizada com tecnologia de ponta para acelerar sua aprovação.
+          </p>
+        </div>
+
+        <!-- Chips de diferenciais -->
+        <div class="flex flex-wrap gap-3">
+          <!-- IA aplicada -->
+          <div class="flex items-center gap-2 bg-white/[0.07] border border-white/10 rounded-full px-4 py-2">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c8960c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z"/><circle cx="7.5" cy="14.5" r="1.5" fill="#c8960c" stroke="none"/><circle cx="16.5" cy="14.5" r="1.5" fill="#c8960c" stroke="none"/></svg>
+            <span class="text-white/80 text-xs font-sans font-medium">IA Aplicada</span>
+          </div>
+          <!-- Machine Learning -->
+          <div class="flex items-center gap-2 bg-white/[0.07] border border-white/10 rounded-full px-4 py-2">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c8960c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+            <span class="text-white/80 text-xs font-sans font-medium">Machine Learning</span>
+          </div>
+          <!-- Trilha individual -->
+          <div class="flex items-center gap-2 bg-white/[0.07] border border-white/10 rounded-full px-4 py-2">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c8960c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span class="text-white/80 text-xs font-sans font-medium">Trilha Individual</span>
+          </div>
+          <!-- Materiais premium -->
+          <div class="flex items-center gap-2 bg-white/[0.07] border border-white/10 rounded-full px-4 py-2">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c8960c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            <span class="text-white/80 text-xs font-sans font-medium">Materiais Premium</span>
+          </div>
+          <!-- Apoio psicopedagógico -->
+          <div class="flex items-center gap-2 bg-white/[0.07] border border-white/10 rounded-full px-4 py-2">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c8960c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            <span class="text-white/80 text-xs font-sans font-medium">Apoio Psicopedagógico</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Cards: sobrepostos na transição navy → paper -->
+    <div class="bg-paper pt-0 pb-16">
+      <div class="max-w-7xl mx-auto px-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-5 -mt-24 relative z-10">
+
+          <!-- Juiz Federal -->
+          <a href="/cursos/juiz-federal" class="group bg-white rounded-2xl overflow-hidden border border-border shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 no-underline flex flex-col">
+            <div class="h-1.5 bg-[#1d4ed8]"></div>
+            <div class="p-6 flex flex-col flex-1">
+              <div class="w-14 h-14 rounded-full bg-[#1d4ed8]/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform overflow-hidden p-1.5">
+                <img src={cargo1.src} alt="Juiz Federal" class="w-full h-full object-contain" loading="lazy" />
+              </div>
+              <div class="h-px w-8 bg-gold mb-3"></div>
+              <h3 class="font-display font-bold text-ink text-[17px] leading-snug mb-2">Juiz Federal</h3>
+              <p class="text-muted text-xs font-sans leading-relaxed flex-1 mb-4">Preparação completa para concursos da Justiça Federal com foco em Direito Constitucional e Administrativo.</p>
+              <div class="flex flex-wrap gap-1.5 mb-5">
+                <span class="text-[10px] font-sans font-semibold px-2 py-0.5 rounded-full bg-[#1d4ed8]/10 text-[#1d4ed8]">TRF</span>
+                <span class="text-[10px] font-sans font-semibold px-2 py-0.5 rounded-full bg-[#1d4ed8]/10 text-[#1d4ed8]">Federal</span>
+              </div>
+              <div class="mt-auto text-center py-2.5 rounded-lg border border-[#1d4ed8]/30 text-[#1d4ed8] text-xs font-sans font-semibold group-hover:bg-[#1d4ed8] group-hover:text-white transition-colors">
+                Saiba mais
+              </div>
+            </div>
+          </a>
+
+          <!-- Juiz Estadual -->
+          <a href="/cursos/juiz-estadual" class="group bg-white rounded-2xl overflow-hidden border border-border shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 no-underline flex flex-col">
+            <div class="h-1.5 bg-[#15803d]"></div>
+            <div class="p-6 flex flex-col flex-1">
+              <div class="w-14 h-14 rounded-full bg-[#15803d]/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform overflow-hidden p-1.5">
+                <img src={cargo2.src} alt="Juiz Estadual" class="w-full h-full object-contain" loading="lazy" />
+              </div>
+              <div class="h-px w-8 bg-gold mb-3"></div>
+              <h3 class="font-display font-bold text-ink text-[17px] leading-snug mb-2">Juiz Estadual</h3>
+              <p class="text-muted text-xs font-sans leading-relaxed flex-1 mb-4">Formação especializada para magistratura estadual com metodologia baseada em casos concretos.</p>
+              <div class="flex flex-wrap gap-1.5 mb-5">
+                <span class="text-[10px] font-sans font-semibold px-2 py-0.5 rounded-full bg-[#15803d]/10 text-[#15803d]">TJ</span>
+                <span class="text-[10px] font-sans font-semibold px-2 py-0.5 rounded-full bg-[#15803d]/10 text-[#15803d]">Estadual</span>
+              </div>
+              <div class="mt-auto text-center py-2.5 rounded-lg border border-[#15803d]/30 text-[#15803d] text-xs font-sans font-semibold group-hover:bg-[#15803d] group-hover:text-white transition-colors">
+                Saiba mais
+              </div>
+            </div>
+          </a>
+
+          <!-- Promotor de Justiça -->
+          <a href="/cursos/promotor-de-justica" class="group bg-white rounded-2xl overflow-hidden border border-border shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 no-underline flex flex-col">
+            <div class="h-1.5 bg-[#9f1239]"></div>
+            <div class="p-6 flex flex-col flex-1">
+              <div class="w-14 h-14 rounded-full bg-[#9f1239]/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform overflow-hidden p-1.5">
+                <img src={cargo3.src} alt="Promotor de Justiça" class="w-full h-full object-contain" loading="lazy" />
+              </div>
+              <div class="h-px w-8 bg-gold mb-3"></div>
+              <h3 class="font-display font-bold text-ink text-[17px] leading-snug mb-2">Promotor de Justiça</h3>
+              <p class="text-muted text-xs font-sans leading-relaxed flex-1 mb-4">Trilha completa para o Ministério Público com ênfase em Direito Penal e Processual Penal.</p>
+              <div class="flex flex-wrap gap-1.5 mb-5">
+                <span class="text-[10px] font-sans font-semibold px-2 py-0.5 rounded-full bg-[#9f1239]/10 text-[#9f1239]">MP</span>
+                <span class="text-[10px] font-sans font-semibold px-2 py-0.5 rounded-full bg-[#9f1239]/10 text-[#9f1239]">Estadual</span>
+              </div>
+              <div class="mt-auto text-center py-2.5 rounded-lg border border-[#9f1239]/30 text-[#9f1239] text-xs font-sans font-semibold group-hover:bg-[#9f1239] group-hover:text-white transition-colors">
+                Saiba mais
+              </div>
+            </div>
+          </a>
+
+          <!-- Procurador da República — DESTAQUE -->
+          <a href="/cursos/procurador-da-republica" class="group bg-[#0f2340] rounded-2xl overflow-hidden border border-gold/40 shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 no-underline flex flex-col relative">
+            <div class="absolute top-3 right-3">
+              <span class="bg-gold text-white text-[9px] font-sans font-bold uppercase tracking-widest px-2 py-0.5 rounded-full">Destaque</span>
+            </div>
+            <div class="h-1.5 bg-gold"></div>
+            <div class="p-6 flex flex-col flex-1">
+              <div class="w-14 h-14 rounded-full bg-gold/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform overflow-hidden p-1.5">
+                <img src={cargo4.src} alt="Procurador da República" class="w-full h-full object-contain" loading="lazy" />
+              </div>
+              <div class="h-px w-8 bg-gold mb-3"></div>
+              <h3 class="font-display font-bold text-white text-[17px] leading-snug mb-2">Procurador da República</h3>
+              <p class="text-white/55 text-xs font-sans leading-relaxed flex-1 mb-4">O mais completo preparatório para o MPF, com simulados em tempo real e mentoria individual.</p>
+              <div class="flex flex-wrap gap-1.5 mb-5">
+                <span class="text-[10px] font-sans font-semibold px-2 py-0.5 rounded-full bg-gold/20 text-gold">MPF</span>
+                <span class="text-[10px] font-sans font-semibold px-2 py-0.5 rounded-full bg-gold/20 text-gold">Federal</span>
+              </div>
+              <div class="mt-auto text-center py-2.5 rounded-lg bg-gold text-white text-xs font-sans font-bold group-hover:bg-[#b8860b] transition-colors">
+                Saiba mais
+              </div>
+            </div>
+          </a>
+
+          <!-- Delegado de Polícia -->
+          <a href="/cursos/delegado" class="group bg-white rounded-2xl overflow-hidden border border-border shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 no-underline flex flex-col">
+            <div class="h-1.5 bg-[#6b21a8]"></div>
+            <div class="p-6 flex flex-col flex-1">
+              <div class="w-14 h-14 rounded-full bg-[#6b21a8]/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform overflow-hidden p-1.5">
+                <img src={cargo5.src} alt="Delegado de Polícia" class="w-full h-full object-contain" loading="lazy" />
+              </div>
+              <div class="h-px w-8 bg-gold mb-3"></div>
+              <h3 class="font-display font-bold text-ink text-[17px] leading-snug mb-2">Delegado de Polícia</h3>
+              <p class="text-muted text-xs font-sans leading-relaxed flex-1 mb-4">Preparatório intensivo para delegado com foco em Direito Penal, Processual e Investigação.</p>
+              <div class="flex flex-wrap gap-1.5 mb-5">
+                <span class="text-[10px] font-sans font-semibold px-2 py-0.5 rounded-full bg-[#6b21a8]/10 text-[#6b21a8]">PC</span>
+                <span class="text-[10px] font-sans font-semibold px-2 py-0.5 rounded-full bg-[#6b21a8]/10 text-[#6b21a8]">Estadual</span>
+              </div>
+              <div class="mt-auto text-center py-2.5 rounded-lg border border-[#6b21a8]/30 text-[#6b21a8] text-xs font-sans font-semibold group-hover:bg-[#6b21a8] group-hover:text-white transition-colors">
+                Saiba mais
+              </div>
+            </div>
+          </a>
+
+        </div>
+
+        <!-- Barra de diferenciais -->
+        <div class="mt-10 bg-white rounded-2xl border border-border shadow-sm px-8 py-6">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-6 divide-y md:divide-y-0 md:divide-x divide-border">
+            <div class="flex items-start gap-3 pt-6 md:pt-0 first:pt-0 md:first:pt-0 md:pr-6">
+              <div class="w-9 h-9 rounded-full bg-gold/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c8960c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+              </div>
+              <div>
+                <div class="font-display font-bold text-ink text-base">Questões comentadas</div>
+                <div class="text-muted text-xs font-sans mt-0.5">Banco com +50.000 questões de concursos anteriores</div>
+              </div>
+            </div>
+            <div class="flex items-start gap-3 pt-6 md:pt-0 md:px-6">
+              <div class="w-9 h-9 rounded-full bg-gold/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c8960c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              </div>
+              <div>
+                <div class="font-display font-bold text-ink text-base">Taxa de aprovação</div>
+                <div class="text-muted text-xs font-sans mt-0.5">92% dos alunos aprovados em até 2 anos</div>
+              </div>
+            </div>
+            <div class="flex items-start gap-3 pt-6 md:pt-0 md:px-6">
+              <div class="w-9 h-9 rounded-full bg-gold/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c8960c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              </div>
+              <div>
+                <div class="font-display font-bold text-ink text-base">Acesso vitalício</div>
+                <div class="text-muted text-xs font-sans mt-0.5">Conteúdo atualizado conforme novos editais</div>
+              </div>
+            </div>
+            <div class="flex items-start gap-3 pt-6 md:pt-0 md:pl-6">
+              <div class="w-9 h-9 rounded-full bg-gold/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c8960c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              </div>
+              <div>
+                <div class="font-display font-bold text-ink text-base">Mentoria ao vivo</div>
+                <div class="text-muted text-xs font-sans mt-0.5">Aulas ao vivo semanais com os melhores docentes</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </section>
 
 </Layout>

@@ -1,0 +1,364 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import { fetchCursos, fetchRecentPosts, fetchEditalsByCargo } from "../../lib/queries";
+import { assetUrl, formatDate } from "../../lib/utils";
+
+// Termos de busca por slug de curso — usados para filtrar editais relacionados ao cargo
+const CARGO_TERMS: Record<string, string[]> = {
+  "juiz-federal":            ["TRF", "Juiz Federal"],
+  "juiz-estadual":           ["TJ", "Juiz Estadual", "magistratura estadual"],
+  "promotor-de-justica":     ["Promotor", "Ministério Público Estadual", "MPSP", "MPRJ", "MPMG"],
+  "procurador-da-republica": ["MPF", "Procurador da República"],
+  "delegado":                ["Delegado", "Polícia Civil", "PC-"],
+};
+
+export async function getStaticPaths() {
+  const cursos = await fetchCursos();
+  return cursos.map(c => ({ params: { slug: c.slug }, props: { curso: c } }));
+}
+
+const { curso } = Astro.props;
+const directusUrl = import.meta.env.PUBLIC_DIRECTUS_URL;
+
+const color = curso.color ?? "#0f2340";
+const heroImg = assetUrl(curso.image, directusUrl, "width=1200&height=500&fit=cover&quality=85");
+
+const terms = CARGO_TERMS[curso.slug] ?? [];
+const [recentPosts, editaisCargo] = await Promise.all([
+  fetchRecentPosts(3),
+  fetchEditalsByCargo(terms, 4),
+]);
+
+function iconSvg(icon: string | null, c: string, size = 32) {
+  switch (icon) {
+    case "courthouse":
+      return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 22V9l9-7 9 7v13"/><path d="M9 22V12h6v10"/><path d="M3 9h18"/></svg>`;
+    case "shield":
+      return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>`;
+    case "torch":
+      return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v6M9.5 4.5l5 1M8 8c0 2.2 1.8 4 4 4s4-1.8 4-4"/><path d="M12 12v10M9 22h6"/></svg>`;
+    case "republic":
+      return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>`;
+    case "badge":
+    default:
+      return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/><path d="M9 12l2 2 4-4"/></svg>`;
+  }
+}
+---
+
+<Layout title={curso.title} description={curso.excerpt ?? undefined}>
+
+  <!-- Breadcrumb -->
+  <div class="bg-paper border-b border-border">
+    <div class="max-w-7xl mx-auto px-6 py-3">
+      <nav class="flex items-center gap-1.5 text-xs font-sans text-muted">
+        <a href="/" class="hover:text-gold transition-colors">Início</a>
+        <span class="text-border">›</span>
+        <a href="/cursos" class="hover:text-gold transition-colors">Cursos</a>
+        <span class="text-border">›</span>
+        <span class="text-ink/60">{curso.title}</span>
+      </nav>
+    </div>
+  </div>
+
+  <!-- Hero navy -->
+  <div class="relative overflow-hidden" style={`background: #0f2340`}>
+    <div class="absolute right-0 top-0 h-full w-1/3 pointer-events-none select-none hidden lg:flex items-center justify-end pr-10 opacity-[0.06]">
+      <div set:html={iconSvg(curso.icon, "#ffffff", 280)} />
+    </div>
+    <div class="max-w-7xl mx-auto px-6 py-14 relative z-10">
+      <div class="max-w-3xl">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="h-px w-8 bg-gold"></div>
+          <span class="text-gold text-[10px] font-sans font-bold uppercase tracking-[0.2em]">Preparatório Golden Jus</span>
+        </div>
+        <div class="flex items-center gap-4 mb-4">
+          <div
+            class="w-16 h-16 rounded-full flex items-center justify-center flex-shrink-0"
+            style={`background: ${color}30`}
+            set:html={iconSvg(curso.icon, color, 30)}
+          />
+          <div class="flex gap-2 flex-wrap">
+            {curso.institution && (
+              <span class="text-xs font-sans font-bold px-3 py-1 rounded-full" style={`background:${color}30; color:${color}`}>
+                {curso.institution}
+              </span>
+            )}
+            {curso.level && (
+              <span class="text-xs font-sans font-bold px-3 py-1 rounded-full" style={`background:${color}30; color:${color}`}>
+                {curso.level}
+              </span>
+            )}
+            {curso.featured && (
+              <span class="text-xs font-sans font-bold px-3 py-1 rounded-full bg-gold text-white">
+                Mais popular
+              </span>
+            )}
+          </div>
+        </div>
+        <h1 class="font-display font-bold text-white text-4xl md:text-5xl leading-tight mb-4">
+          {curso.title}
+        </h1>
+        {curso.excerpt && (
+          <p class="text-white/60 font-serif text-lg leading-relaxed mb-8">
+            {curso.excerpt}
+          </p>
+        )}
+        <div class="flex items-center gap-4 flex-wrap">
+          <a
+            href={curso.cta_url ?? "#"}
+            class="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-sans font-bold text-sm text-white transition-opacity hover:opacity-90"
+            style={`background: ${color}`}
+          >
+            Começar agora
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </a>
+          {curso.price && (
+            <div class="text-white/70 text-sm font-sans">
+              A partir de <span class="text-white font-bold">{curso.price}</span>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Conteúdo principal + Sidebar -->
+  <div class="max-w-7xl mx-auto px-6 py-12">
+    <div class="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-10 items-start">
+
+      <!-- Coluna principal -->
+      <div class="space-y-10">
+
+        <!-- Imagem de capa -->
+        {heroImg && (
+          <div class="rounded-2xl overflow-hidden shadow-sm">
+            <img src={heroImg} alt={curso.title} class="w-full object-cover max-h-[400px]" />
+          </div>
+        )}
+
+        <!-- Destaques do curso -->
+        {curso.highlights && curso.highlights.length > 0 && (
+          <div class="bg-white rounded-2xl border border-border shadow-sm p-7">
+            <h2 class="font-display font-bold text-xl text-ink mb-5 flex items-center gap-3">
+              <div class="h-px w-6 bg-gold"></div>
+              O que está incluso
+            </h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {(curso.highlights as string[]).map((item) => (
+                <div class="flex items-start gap-3">
+                  <div class="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" style={`background: ${color}18`}>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={color} stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                  </div>
+                  <span class="text-sm font-sans text-ink leading-snug">{item}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <!-- Descrição completa -->
+        {curso.description && (
+          <div class="prose prose-lg max-w-none
+            prose-headings:font-display prose-headings:text-ink prose-headings:font-bold
+            prose-h2:text-2xl prose-h2:mt-8 prose-h2:mb-4
+            prose-h3:text-xl prose-h3:mt-6 prose-h3:mb-3
+            prose-p:text-ink/85 prose-p:leading-relaxed prose-p:font-serif
+            prose-ul:text-ink/85
+            prose-li:leading-relaxed prose-li:font-serif
+            prose-strong:text-ink">
+            <Fragment set:html={curso.description} />
+          </div>
+        )}
+
+        <!-- Módulos do curso -->
+        {curso.modules && (curso.modules as string[]).length > 0 && (
+          <div class="bg-white rounded-2xl border border-border shadow-sm p-7">
+            <h2 class="font-display font-bold text-xl text-ink mb-5 flex items-center gap-3">
+              <div class="h-px w-6 bg-gold"></div>
+              Grade curricular
+            </h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {(curso.modules as string[]).map((mod, i) => (
+                <div class="flex items-center gap-3 p-3 rounded-lg bg-paper/60 border border-border/60">
+                  <span class="text-[10px] font-sans font-bold text-white w-5 h-5 rounded flex items-center justify-center flex-shrink-0" style={`background:${color}`}>
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <span class="text-sm font-sans text-ink">{mod}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+      </div>
+
+      <!-- Sidebar -->
+      <aside class="lg:sticky lg:top-24 space-y-5">
+
+        <!-- Card de inscrição -->
+        <div class="bg-white rounded-2xl border shadow-sm overflow-hidden" style={`border-color: ${color}40`}>
+          <div class="p-1" style={`background: ${color}`}></div>
+          <div class="p-6">
+            <div class="text-center mb-5">
+              <div class="text-[11px] font-sans text-muted uppercase tracking-wide mb-1">A partir de</div>
+              <div class="font-display font-bold text-3xl text-ink">{curso.price ?? "Consulte"}</div>
+              {curso.duration_months && (
+                <div class="text-xs font-sans text-muted mt-1">Curso de {curso.duration_months} meses</div>
+              )}
+            </div>
+            <a
+              href={curso.cta_url ?? "#"}
+              class="block w-full text-center py-3.5 px-4 rounded-xl font-sans font-bold text-sm text-white mb-3 hover:opacity-90 transition-opacity"
+              style={`background: ${color}`}
+            >
+              Quero me inscrever
+            </a>
+            <a
+              href="/cursos"
+              class="block w-full text-center py-3 px-4 rounded-xl font-sans font-medium text-sm border border-border text-muted hover:text-navy hover:border-navy transition-colors"
+            >
+              Ver todos os cursos
+            </a>
+          </div>
+          {curso.highlights && (curso.highlights as string[]).slice(0, 4).map((h) => (
+            <div class="px-6 py-2.5 border-t border-border flex items-center gap-2.5">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={color} stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+              <span class="text-xs font-sans text-muted">{h}</span>
+            </div>
+          ))}
+        </div>
+
+        <!-- Detalhes rápidos -->
+        <div class="bg-white rounded-2xl border border-border shadow-sm overflow-hidden">
+          <div class="px-5 py-3.5 border-b border-border flex items-center gap-2">
+            <div class="h-px w-5 bg-gold"></div>
+            <h3 class="font-sans font-bold text-sm text-ink uppercase tracking-wide">Detalhes do curso</h3>
+          </div>
+          <div class="divide-y divide-border">
+            {curso.career && (
+              <div class="px-5 py-3 flex items-start justify-between gap-3">
+                <span class="text-[11px] font-sans font-semibold text-muted uppercase tracking-wide flex-shrink-0 mt-0.5">Carreira</span>
+                <span class="text-sm font-sans font-bold text-ink text-right">{curso.career}</span>
+              </div>
+            )}
+            {curso.institution && (
+              <div class="px-5 py-3 flex items-start justify-between gap-3">
+                <span class="text-[11px] font-sans font-semibold text-muted uppercase tracking-wide flex-shrink-0 mt-0.5">Órgão</span>
+                <span class="text-sm font-sans font-bold text-ink text-right">{curso.institution}</span>
+              </div>
+            )}
+            {curso.level && (
+              <div class="px-5 py-3 flex items-start justify-between gap-3">
+                <span class="text-[11px] font-sans font-semibold text-muted uppercase tracking-wide flex-shrink-0 mt-0.5">Nível</span>
+                <span class="text-sm font-sans font-bold text-ink text-right">{curso.level}</span>
+              </div>
+            )}
+            {curso.duration_months && (
+              <div class="px-5 py-3 flex items-start justify-between gap-3">
+                <span class="text-[11px] font-sans font-semibold text-muted uppercase tracking-wide flex-shrink-0 mt-0.5">Duração</span>
+                <span class="text-sm font-sans font-bold text-ink text-right">{curso.duration_months} meses</span>
+              </div>
+            )}
+            {curso.modules && (
+              <div class="px-5 py-3 flex items-start justify-between gap-3">
+                <span class="text-[11px] font-sans font-semibold text-muted uppercase tracking-wide flex-shrink-0 mt-0.5">Módulos</span>
+                <span class="text-sm font-sans font-bold text-ink text-right">{(curso.modules as string[]).length} módulos</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <!-- Últimos editais do cargo -->
+        {editaisCargo.length > 0 && (
+          <div class="bg-white rounded-2xl border shadow-sm overflow-hidden" style={`border-color: ${color}30`}>
+            <div class="px-5 py-3.5 border-b flex items-center gap-2.5" style={`border-color: ${color}20; background: ${color}08`}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill={color}><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+              <h3 class="font-sans font-bold text-sm uppercase tracking-wide" style={`color: ${color}`}>
+                Últimos editais
+              </h3>
+            </div>
+            <div class="divide-y divide-border">
+              {editaisCargo.map(edital => (
+                <a href={`/blog/${edital.slug}`} class="flex gap-3 p-4 hover:bg-paper/40 transition-colors no-underline group">
+                  <div class="w-1.5 rounded-full flex-shrink-0 mt-1 self-stretch" style={`background: ${color}40`}></div>
+                  <div class="flex-1 min-w-0">
+                    <h4 class="font-sans font-semibold text-xs text-ink leading-snug line-clamp-2 group-hover:text-navy transition-colors mb-1">
+                      {edital.title}
+                    </h4>
+                    <div class="flex items-center gap-1.5 text-[10px] font-sans text-muted">
+                      <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                      {formatDate(edital.published_date)}
+                    </div>
+                  </div>
+                </a>
+              ))}
+            </div>
+            <div class="px-4 py-3 border-t border-border bg-paper/30">
+              <a href="/categoria/editais-resultados" class="block text-center text-xs font-sans font-semibold hover:opacity-80 transition-opacity" style={`color: ${color}`}>
+                Ver todos os editais →
+              </a>
+            </div>
+          </div>
+        )}
+
+        <!-- Últimas notícias -->
+        <div class="bg-white rounded-2xl border border-border shadow-sm overflow-hidden">
+          <div class="px-5 py-3.5 border-b border-border flex items-center justify-between">
+            <h3 class="font-sans font-bold text-sm text-ink uppercase tracking-wide">Últimas notícias</h3>
+            <div class="h-0.5 w-6 bg-gold"></div>
+          </div>
+          <div class="divide-y divide-border">
+            {recentPosts.map(rp => (
+              <a href={`/blog/${rp.slug}`} class="flex gap-3 p-4 hover:bg-paper/40 transition-colors no-underline group">
+                <div class="flex-1 min-w-0">
+                  <h4 class="font-sans font-semibold text-xs text-ink leading-snug line-clamp-2 group-hover:text-navy transition-colors">
+                    {rp.title}
+                  </h4>
+                  <p class="text-[11px] font-sans text-muted mt-1">{formatDate(rp.published_date)}</p>
+                </div>
+              </a>
+            ))}
+          </div>
+          <div class="px-4 py-3 border-t border-border bg-paper/30">
+            <a href="/blog" class="block text-center text-xs font-sans font-semibold text-gold hover:text-navy transition-colors">
+              Ver todas as notícias →
+            </a>
+          </div>
+        </div>
+
+      </aside>
+    </div>
+  </div>
+
+  <!-- CTA final -->
+  <section class="bg-[#0f2340] py-14">
+    <div class="max-w-3xl mx-auto px-6 text-center">
+      <div class="font-display font-bold text-white text-3xl md:text-4xl mb-4">
+        Pronto para começar sua<br /><span style={`color: ${color}`}>preparação?</span>
+      </div>
+      <p class="text-white/55 font-serif text-base leading-relaxed mb-8 max-w-xl mx-auto">
+        Junte-se a milhares de concurseiros que já escolheram o Golden Jus para conquistar a aprovação nos maiores concursos do país.
+      </p>
+      <div class="flex items-center justify-center gap-4 flex-wrap">
+        <a
+          href={curso.cta_url ?? "#"}
+          class="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl font-sans font-bold text-sm text-white transition-opacity hover:opacity-90"
+          style={`background: ${color}`}
+        >
+          Inscrever-se agora
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+        <a
+          href="/cursos"
+          class="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl font-sans font-medium text-sm text-white/70 border border-white/20 hover:border-white/50 hover:text-white transition-colors"
+        >
+          Ver outros cursos
+        </a>
+      </div>
+    </div>
+  </section>
+
+</Layout>
